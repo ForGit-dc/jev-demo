@@ -1,0 +1,81 @@
+JEV, MESURE
+Presentation interactive du modele jev-1.13.0 de TypeSafe, confronte au reranker
+de narratifs et a la detection de discours haineux.
+
+
+DEUX FACONS DE L'OUVRIR
+-----------------------
+
+1. Double-cliquer sur index.html
+
+   Tout fonctionne. Les reponses affichees dans la section "Essayer" ont ete
+   enregistrees depuis la vraie API le 27/09/2026 et sont embarquees dans la page.
+   C'est le mode a utiliser pour presenter, ou pour envoyer le fichier a quelqu'un.
+
+2. Lancer le serveur, pour interroger Jev en direct
+
+       Windows       python serveur.py
+       WSL / Linux   python3 serveur.py
+
+   puis ouvrir http://localhost:8765
+
+   La section "Essayer" appelle alors reellement l'API : on peut taper n'importe
+   quel texte et voir la reponse arriver. L'indicateur en bas a gauche du menu
+   passe de "reponses enregistrees" a "API en direct".
+
+
+POURQUOI UN SERVEUR
+-------------------
+
+Deux raisons, pas une de plus :
+
+  - l'API TypeSafe ne renvoie pas d'en-tete Access-Control-Allow-Origin, donc un
+    appel lance depuis le navigateur serait bloque. Le serveur relaie ;
+  - la cle ne doit pas se trouver dans le fichier HTML. Elle est lue cote serveur,
+    depuis le .env, et ne traverse jamais le navigateur.
+
+
+OU LA CLE EST CHERCHEE
+----------------------
+
+Dans cet ordre, la premiere trouvee gagne :
+
+  1. la variable d'environnement TYPESAFE_API_KEY ou jev_anass ;
+  2. un fichier .env pose a cote de serveur.py ;
+  3. les .env de hate-speech-detection et social-data-studio dans le repertoire
+     personnel, quand le script tourne sous Linux ou WSL ;
+  4. les memes fichiers a travers WSL quand le script tourne sous Windows, par
+     \\wsl.localhost\<distro>\home\<user>\... Les distributions sont listees
+     automatiquement.
+
+Lance depuis Windows, le script lit donc la cle du .env de WSL sans qu'on ait a
+la recopier. Si rien n'est trouve, il le dit et la page marche quand meme, sur
+les reponses enregistrees.
+
+Ne pas poser de .env dans ce dossier si la presentation doit etre transmise :
+la cle partirait avec.
+
+
+CE QU'IL Y A DEDANS
+-------------------
+
+  01  Deux machines      un LLM qui genere contre un modele qui decide
+  02  Trois questions    noul, choice, score, et pourquoi la confiance trompe
+  03  Essayer            les vraies questions des deux campagnes, en direct
+  04  Reranker           le prompt brut, le cas Turquie, le banc final
+  05  Hate speech        la batterie de 9 questions, la gate, la calibration
+  06  Verdict            six questions, six reponses
+
+
+D'OU VIENNENT LES CHIFFRES
+--------------------------
+
+  - campagne reranker : 6 194 appels, 333 posts annotes, 6 formes de prompt ;
+  - campagne hate speech du 23/09/2026 : 8 161 appels, 1 200 lignes de test par
+    axe, commit 6807993 du depot hate-speech-detection ;
+  - reponses de la section "Essayer" : rejouees le 27/09/2026 contre l'API.
+
+Les deux seules valeurs estimees de toute la page sont les scores de Gemma 4 12B
+au banc reranker, marquees comme telles a l'ecran.
+
+Raccourcis : fleches haut et bas pour passer d'une section a l'autre.

@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jev, mesuré</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f2efe8; --paper2:#eae6dc; --paper3:#e2ddd0;
+  --ink:#17130e; --ink2:#4d443a; --ink3:#8a8073; --ink4:#b3a99a;
+  --rule:#d2cabb; --rule2:#bdb3a1;
+  --jev:#b8402d; --prod:#1c5b54; --shield:#8a7340; --openai:#6b6257;
+  --ok:#2f6d47; --ko:#b8402d;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --disp:"Fraunces",Georgia,serif;
+  --rail:196px; --gut:clamp(16px,4vw,64px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:.35;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+h1,h2,h3{font-family:var(--disp); font-weight:600; letter-spacing:-.015em; line-height:1.1; margin:0}
+p{margin:0 0 1em}
+a{color:var(--jev); text-decoration:none; border-bottom:1px solid currentColor}
+code,.mono{font-family:var(--mono); font-size:.88em}
+.lab{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink3); font-weight:500}
+.num{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+/* ---------- rail ---------- */
+.rail{position:fixed; top:0; left:0; bottom:0; width:var(--rail); padding:28px 0 28px 22px;
+  border-right:1px solid var(--rule); display:flex; flex-direction:column; gap:2px; z-index:60;
+  background:var(--paper)}
+.rail .sig{font-family:var(--disp); font-size:19px; font-weight:700; margin-bottom:20px; letter-spacing:-.02em}
+.rail .sig i{font-style:normal; color:var(--jev)}
+.rail a{display:flex; gap:9px; align-items:baseline; padding:5px 0; border:0; color:var(--ink3);
+  font-size:13px; line-height:1.3; transition:color .18s}
+.rail a b{font-family:var(--mono); font-size:10.5px; font-weight:500; opacity:.7; width:16px; flex:none}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--ink); font-weight:600}
+.rail a.on b{color:var(--jev); opacity:1}
+.rail .foot{margin-top:auto; font-family:var(--mono); font-size:10px; color:var(--ink3); line-height:1.7;
+  letter-spacing:.03em; padding-right:16px}
+.railbar{position:fixed; left:0; top:0; height:2px; background:var(--jev); z-index:70; width:0}
+
+main{margin-left:var(--rail); padding:0 var(--gut) 0 var(--gut); max-width:1180px}
+section{padding:96px 0; border-top:1px solid var(--rule); scroll-margin-top:0}
+section:first-of-type{border-top:0}
+.shead{display:grid; grid-template-columns:78px 1fr; gap:24px; align-items:start; margin-bottom:38px}
+.shead .n{font-family:var(--disp); font-size:58px; font-weight:400; line-height:.8; color:var(--rule2);
+  letter-spacing:-.04em}
+.shead h2{font-size:clamp(28px,3.4vw,42px); margin-bottom:10px}
+.shead .sub{font-size:17px; color:var(--ink2); max-width:62ch; margin:0}
+.body{max-width:68ch}
+.wide{max-width:none}
+
+/* ---------- couverture ---------- */
+.couv{margin-left:var(--rail); padding:clamp(56px,9vh,110px) var(--gut) 70px; max-width:1180px;
+  border-bottom:1px solid var(--rule)}
+.couv .kick{display:flex; gap:14px; align-items:center; margin-bottom:26px; flex-wrap:wrap}
+.couv h1{font-size:clamp(46px,8.2vw,104px); line-height:.9; letter-spacing:-.035em; font-weight:600;
+  max-width:15ch; margin-bottom:26px}
+.couv h1 em{font-style:italic; color:var(--jev)}
+.couv .dek{font-size:clamp(17px,1.5vw,20px); max-width:58ch; color:var(--ink2); line-height:1.55}
+.fiche{margin-top:48px; border-top:1px solid var(--ink); padding-top:0; display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(168px,1fr))}
+.fiche div{border-right:1px solid var(--rule); padding:16px 18px 16px 0}
+.fiche div:last-child{border-right:0}
+.fiche .k{font-family:var(--mono); font-size:10px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink3); margin-bottom:7px}
+.fiche .v{font-family:var(--mono); font-size:15px; font-weight:500; line-height:1.35}
+.fiche .v small{display:block; font-size:11.5px; color:var(--ink3); font-weight:400; margin-top:3px;
+  letter-spacing:0}
+
+/* ---------- briques ---------- */
+.tag{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.1em; text-transform:uppercase; padding:4px 9px; border:1px solid var(--rule2);
+  color:var(--ink2); background:var(--paper2)}
+.tag.j{border-color:var(--jev); color:var(--jev)}
+.tag.ok{border-color:var(--ok); color:var(--ok)}
+.tag.ko{border-color:var(--ko); color:var(--ko)}
+.dot{width:7px; height:7px; border-radius:50%; background:currentColor; flex:none}
+
+.seg{display:inline-flex; border:1px solid var(--ink); background:var(--paper)}
+.seg button{font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+  padding:8px 15px; background:none; border:0; border-right:1px solid var(--rule2); cursor:pointer;
+  color:var(--ink2); transition:background .15s,color .15s}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink); color:var(--paper)}
+.seg button:hover:not(.on){background:var(--paper3)}
+
+.chips{display:flex; gap:7px; flex-wrap:wrap}
+.chip{font-family:var(--mono); font-size:11.5px; padding:6px 11px; border:1px solid var(--rule2);
+  background:var(--paper); cursor:pointer; color:var(--ink2); transition:all .15s; line-height:1.3}
+.chip:hover{border-color:var(--ink3); background:var(--paper2)}
+.chip.on{border-color:var(--ink); background:var(--ink); color:var(--paper)}
+.chip .lg{opacity:.6; margin-left:6px; font-size:10px}
+.chip.on .lg{opacity:.8}
+
+.card{border:1px solid var(--rule); background:var(--paper2)}
+.card>.hd{padding:13px 18px; border-bottom:1px solid var(--rule); display:flex; justify-content:space-between;
+  align-items:center; gap:14px; flex-wrap:wrap}
+.card>.bd{padding:18px}
+
+pre{font-family:var(--mono); font-size:12.2px; line-height:1.62; margin:0; overflow:auto;
+  background:var(--paper3); padding:16px; border:1px solid var(--rule); color:var(--ink2);
+  max-height:420px; white-space:pre-wrap; word-break:break-word}
+pre .k{color:var(--jev)}
+pre .s{color:var(--prod)}
+pre .n{color:var(--ink)}
+details{border-top:1px solid var(--rule); margin-top:14px}
+details summary{cursor:pointer; padding:11px 0; font-family:var(--mono); font-size:11.5px;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--ink3); list-style:none; display:flex;
+  gap:8px; align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+"; font-size:14px; width:12px}
+details[open] summary::before{content:"\2212"}
+details summary:hover{color:var(--ink)}
+details .in{padding-bottom:16px}
+
+table{border-collapse:collapse; width:100%; font-size:14px}
+th,td{text-align:right; padding:9px 10px; border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left; padding-left:0}
+th{font-family:var(--mono); font-size:10px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--ink3); font-weight:500; border-bottom:1px solid var(--ink)}
+td.n{font-family:var(--mono); font-variant-numeric:tabular-nums}
+tr.hi td{background:var(--paper3); font-weight:600}
+td .best{color:var(--prod); font-weight:600}
+td .gauche{display:block; text-align:left}
+td:has(.gauche){text-align:left}
+td .lose{color:var(--ink2); opacity:.72}
+
+.note{border-left:2px solid var(--jev); padding:2px 0 2px 16px; margin:22px 0; font-size:15px;
+  color:var(--ink2); max-width:62ch}
+.note b{color:var(--ink)}
+.kpi{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); border-top:1px solid var(--ink);
+  margin:28px 0}
+.kpi div{padding:15px 16px 15px 0; border-right:1px solid var(--rule)}
+.kpi div:last-child{border-right:0}
+.kpi .v{font-family:var(--mono); font-size:27px; font-weight:500; letter-spacing:-.02em; line-height:1}
+.kpi .v.j{color:var(--jev)}
+.kpi .k{font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink3); margin-top:9px}
+
+/* ---------- distributions ---------- */
+.dist{display:flex; flex-direction:column; gap:7px}
+.row{display:grid; grid-template-columns:var(--lw,116px) 1fr 54px; gap:12px; align-items:center;
+  font-size:13.5px}
+.row .lb{font-family:var(--mono); font-size:12px; color:var(--ink2); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap}
+.row .tr{height:13px; background:var(--paper3); position:relative; border:1px solid var(--rule)}
+.row .fl{position:absolute; inset:0 auto 0 0; background:var(--ink3); width:0;
+  transition:width .55s cubic-bezier(.22,1,.36,1)}
+.row .vl{font-family:var(--mono); font-size:12px; text-align:right; color:var(--ink2)}
+.row.j .fl{background:var(--jev)} .row.j .vl{color:var(--jev); font-weight:500}
+.row.p .fl{background:var(--prod)}
+.row.mute{opacity:.42}
+.row .fl.seuil::after{content:""; position:absolute; right:0; top:-4px; bottom:-4px; width:1px;
+  background:var(--ink)}
+.seuilline{position:absolute; top:-3px; bottom:-3px; width:1px; background:var(--ink); z-index:2}
+.seuilline::after{content:attr(data-v); position:absolute; top:-17px; left:50%; transform:translateX(-50%);
+  font-family:var(--mono); font-size:9.5px; color:var(--ink); white-space:nowrap}
+
+/* ---------- comparateur S1 ---------- */
+.duo{display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--ink); margin-top:26px}
+.duo>div{padding:0; min-width:0}
+.duo>div:first-child{border-right:1px solid var(--ink)}
+.duo .ttl{padding:13px 18px; border-bottom:1px solid var(--rule); display:flex; align-items:center;
+  gap:9px; background:var(--paper2)}
+.duo .ttl b{font-family:var(--disp); font-size:17px; font-weight:600}
+.duo .ttl .s{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink3); margin-left:auto}
+.duo .ct{padding:18px}
+.duo .llm .ttl{background:var(--paper3)}
+.fail{display:flex; flex-direction:column; gap:1px; font-size:13.5px}
+.fail li{list-style:none; display:flex; gap:10px; align-items:flex-start; padding:9px 0;
+  border-bottom:1px solid var(--rule); line-height:1.45}
+.fail li:last-child{border-bottom:0}
+.fail .m{font-family:var(--mono); font-size:13px; flex:none; width:15px; text-align:center}
+.fail li.bad .m{color:var(--ko)} .fail li.good .m{color:var(--ok)}
+.fail li.bad{color:var(--ink2)} .fail li.good{color:var(--ink2)}
+.fail li b{color:var(--ink); font-weight:600}
+
+/* ---------- primitives S2 ---------- */
+.prim{display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--ink)}
+.prim>button{border:0; border-right:1px solid var(--rule); background:var(--paper2); padding:20px 18px;
+  text-align:left; cursor:pointer; font-family:inherit; transition:background .16s; color:var(--ink)}
+.prim>button:last-child{border-right:0}
+.prim>button:hover{background:var(--paper3)}
+.prim>button.on{background:var(--ink); color:var(--paper)}
+.prim>button.on .d,.prim>button.on .t{color:var(--paper)}
+.prim .t{font-family:var(--mono); font-size:17px; font-weight:600; letter-spacing:.02em; margin-bottom:7px}
+.prim .d{font-size:13.5px; color:var(--ink2); line-height:1.45}
+.prim>button.on .d{opacity:.78}
+.primdet{border:1px solid var(--ink); border-top:0; padding:24px; background:var(--paper2)}
+.g2{display:grid; grid-template-columns:1fr 1fr; gap:26px}
+.g2>div{min-width:0}
+
+.confbox{border:1px solid var(--rule); background:var(--paper); padding:18px; margin-top:18px}
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:2px; background:var(--rule2);
+  outline:0; margin:14px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:15px; height:15px;
+  background:var(--jev); cursor:pointer; border-radius:50%}
+input[type=range]::-moz-range-thumb{width:15px; height:15px; background:var(--jev); cursor:pointer;
+  border:0; border-radius:50%}
+
+/* ---------- bac a sable S3 ---------- */
+textarea{width:100%; font-family:var(--mono); font-size:13.5px; line-height:1.6; padding:14px;
+  border:1px solid var(--rule2); background:var(--paper); color:var(--ink); resize:vertical;
+  min-height:92px; outline:0}
+textarea:focus{border-color:var(--ink)}
+.btn{font-family:var(--mono); font-size:12px; letter-spacing:.09em; text-transform:uppercase;
+  padding:11px 20px; background:var(--ink); color:var(--paper); border:1px solid var(--ink);
+  cursor:pointer; transition:opacity .15s}
+.btn:hover{opacity:.84}
+.btn:disabled{opacity:.4; cursor:wait}
+.btn.gh{background:none; color:var(--ink)}
+.meta{display:flex; gap:20px; flex-wrap:wrap; font-family:var(--mono); font-size:11.5px; color:var(--ink3)}
+.meta b{color:var(--ink); font-weight:500}
+.live{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px;
+  letter-spacing:.1em; text-transform:uppercase}
+.live .dot{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.live.on{color:var(--ok)} .live.off{color:var(--ink3)}
+
+/* ---------- graphiques ---------- */
+.chart{width:100%; height:auto; display:block; overflow:visible}
+.chart .ax{stroke:var(--rule2); stroke-width:1}
+.chart .gl{stroke:var(--rule); stroke-width:1; stroke-dasharray:2 3}
+.chart text{font-family:var(--mono); font-size:10px; fill:var(--ink3)}
+.chart text.v{fill:var(--ink2); font-size:10.5px}
+.leg{display:flex; gap:18px; flex-wrap:wrap; font-family:var(--mono); font-size:11.5px; color:var(--ink2);
+  margin-top:14px}
+.leg span{display:inline-flex; align-items:center; gap:7px}
+.leg i{width:11px; height:11px; display:block; flex:none}
+
+.verdict{display:grid; grid-template-columns:1fr auto; gap:20px; align-items:center; padding:22px 0;
+  border-bottom:1px solid var(--rule)}
+.verdict:last-child{border-bottom:0}
+.verdict .q{font-family:var(--disp); font-size:20px; font-weight:600; line-height:1.25}
+.verdict .w{font-size:14px; color:var(--ink2); margin-top:6px; max-width:64ch}
+.verdict .a{font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  padding:9px 16px; white-space:nowrap; border:1px solid currentColor}
+.verdict .a.oui{color:var(--ok)} .verdict .a.non{color:var(--ko)} .verdict .a.peut{color:var(--shield)}
+
+footer{margin-left:var(--rail); padding:46px var(--gut) 60px; border-top:1px solid var(--ink);
+  max-width:1180px; font-family:var(--mono); font-size:11.5px; color:var(--ink3); line-height:1.9}
+footer b{color:var(--ink2); font-weight:500}
+
+@media(max-width:940px){
+  :root{--rail:0px}
+  .rail{position:sticky; top:0; left:0; bottom:auto; width:100%; height:auto; flex-direction:row;
+    align-items:center; gap:0; padding:9px 16px; overflow-x:auto; border-right:0;
+    border-bottom:1px solid var(--rule)}
+  .rail .sig{margin:0 16px 0 0; font-size:15px; flex:none}
+  .rail a{flex:none; padding:5px 10px; font-size:12px}
+  .rail a span{display:none}
+  .rail a b{width:auto}
+  .rail .foot{display:none}
+  main,.couv,footer{margin-left:0}
+  .duo,.g2,.prim{grid-template-columns:1fr}
+  .duo>div:first-child{border-right:0; border-bottom:1px solid var(--ink)}
+  .prim>button{border-right:0; border-bottom:1px solid var(--rule)}
+  .shead{grid-template-columns:1fr; gap:6px}
+  .shead .n{font-size:34px}
+  section{padding:60px 0}
+  .row{grid-template-columns:var(--lws,92px) 1fr 48px; gap:9px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+</head>
+<body>
+<nav class="rail">
+  <div class="sig">Jev<i>.</i></div>
+  <a href="#s1" data-s="s1"><b>01</b><span>Deux machines</span></a>
+  <a href="#s2" data-s="s2"><b>02</b><span>Trois questions</span></a>
+  <a href="#s3" data-s="s3"><b>03</b><span>Essayer</span></a>
+  <a href="#s4" data-s="s4"><b>04</b><span>Reranker</span></a>
+  <a href="#s5" data-s="s5"><b>05</b><span>Hate speech</span></a>
+  <a href="#s6" data-s="s6"><b>06</b><span>Verdict</span></a>
+  <div class="foot">Opsci &middot; Social Data Studio<br>Mesures des 23 et 27/09/2026<br>
+    <span id="modeLive" class="live off"><i class="dot"></i>hors ligne</span></div>
+</nav>
+<div class="railbar" id="railbar"></div>
+
+<header class="couv">
+  <div class="kick">
+    <span class="tag j"><i class="dot"></i>jev-1.13.0</span>
+    <span class="tag">TypeSafe, septembre 2026</span>
+    <span class="tag">14 355 appels mesurés</span>
+  </div>
+  <h1>Un modèle qui <em>décide</em>, au lieu d'écrire.</h1>
+  <p class="dek">Jev ne génère pas de texte. On lui donne une matière et des questions typées,
+  il rend une décision et la distribution de probabilités qui va avec. Cette page explique
+  le mécanisme, le laisse essayer en direct, puis confronte ses chiffres aux deux briques
+  de production qu'il prétend remplacer.</p>
+  <div class="fiche">
+    <div><div class="k">Type</div><div class="v">System One<small>ni chat, ni agent, ni génération</small></div></div>
+    <div><div class="k">Prix</div><div class="v">0,042 $<small>par million de jetons d'entrée, sortie gratuite</small></div></div>
+    <div><div class="k">Latence</div><div class="v">0,3 s<small>par appel, 5 appels en parallèle</small></div></div>
+    <div><div class="k">Licence</div><div class="v">API fermée<small>pas de poids, pas d'auto-hébergement</small></div></div>
+    <div><div class="k">Réponses illisibles</div><div class="v">0<small>sur 14 355 appels, par construction</small></div></div>
+  </div>
+</header>
+
+<main>
+<!-- ================= 01 ================= -->
+<section id="s1">
+  <div class="shead"><div class="n">01</div>
+    <div><h2>Deux machines qui ne font pas le même métier</h2>
+    <p class="sub">Même texte, même travail à faire : dire quel narratif ce post exprime.
+    À gauche ce qu'on fait aujourd'hui avec un LLM, à droite ce que fait un modèle System One.</p></div>
+  </div>
+
+  <div class="card" style="background:var(--paper)">
+    <div class="hd">
+      <div><div class="lab" style="margin-bottom:5px">Le post à juger</div>
+      <div class="mono" style="font-size:13.5px; max-width:70ch; line-height:1.5">Turkey remembered NATO now that she is afraid of whats happening in the Middle East and because she knows she is next after Iran.</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top:26px" class="seg" id="segS1">
+    <button data-v="req" class="on">La requête</button>
+    <button data-v="rep">La réponse</button>
+    <button data-v="cass">Ce qui peut casser</button>
+  </div>
+
+  <div class="duo">
+    <div class="llm">
+      <div class="ttl"><b>LLM génératif</b><span class="s">Gemma 4 12B, prod</span></div>
+      <div class="ct" id="s1a"></div>
+    </div>
+    <div>
+      <div class="ttl"><b>System One</b><span class="s">jev-1.13.0</span></div>
+      <div class="ct" id="s1b"></div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:30px"><b>Ce qui disparaît.</b> Sur les onze lignes du prompt
+  de production, sept ne servaient qu'à décrire le format de sortie. Le type de la question les
+  porte désormais : « réponds par un seul nombre », « réponds 0 si rien ne correspond »,
+  « tu ne peux choisir qu'un seul claim ». Il ne reste que les quatre lignes qui portent du sens.
+  Avec elles disparaissent la température, le top_p, le budget de réflexion, le parseur et sa
+  reprise sur erreur.</div>
+
+  <div class="kpi">
+    <div><div class="v j">0</div><div class="k">réponse illisible</div></div>
+    <div><div class="v">14 355</div><div class="k">appels des deux campagnes</div></div>
+    <div><div class="v">0</div><div class="k">retente</div></div>
+    <div><div class="v">0,3 s</div><div class="k">latence par appel</div></div>
+  </div>
+</section>
+
+<!-- ================= 02 ================= -->
+<section id="s2">
+  <div class="shead"><div class="n">02</div>
+    <div><h2>Trois formes de question, et rien d'autre</h2>
+    <p class="sub">Tout ce qu'on peut demander à Jev tient dans ces trois types. Le type n'est pas
+    une préférence de sortie, c'est le contrat : la réponse ne peut pas en sortir.</p></div>
+  </div>
+
+  <div class="prim" id="prim">
+    <button data-p="noul" class="on">
+      <div class="t">noul</div>
+      <div class="d">Une affirmation vraie ou fausse. Rend une probabilité entre 0 et 1, et rien d'autre.</div>
+    </button>
+    <button data-p="choice">
+      <div class="t">choice</div>
+      <div class="d">Une option parmi N, jusqu'à 255. Rend l'option, la distribution complète et une confiance.</div>
+    </button>
+    <button data-p="score">
+      <div class="t">score</div>
+      <div class="d">Un niveau sur une échelle ordonnée de 2 à 10 crans. Rend une position, fractionnaire si besoin.</div>
+    </button>
+  </div>
+  <div class="primdet" id="primdet"></div>
+
+  <div class="g2" style="margin-top:34px">
+    <div>
+      <h3 style="font-size:21px; margin-bottom:12px">La confiance n'est pas la justesse</h3>
+      <p style="font-size:15px; color:var(--ink2)">C'est une statistique calculée sur la distribution,
+      rien de plus : <span class="mono">(n &times; p_max &minus; 1) / (n &minus; 1)</span>. Elle mesure
+      à quel point une option écrase les autres, sans savoir laquelle. Un rejet massif et un choix
+      massif ont exactement la même confiance.</p>
+      <p style="font-size:15px; color:var(--ink2)">Conséquence mesurée sur le reranker : l'exactitude
+      par bande de confiance est plate, voire inversée. Escalader vers un modèle plus gros quand la
+      confiance est basse n'a aucune base. Ce qui sert, c'est la probabilité brute de l'option qui
+      vous intéresse.</p>
+      <p style="font-size:15px; color:var(--ink2)">Un <span class="mono">noul</span> ne rend d'ailleurs
+      aucune confiance. Juste la probabilité. La règle de décision n'y est pas une option.</p>
+    </div>
+    <div class="confbox">
+      <div class="lab">Bougez la probabilité de l'option gagnante</div>
+      <input type="range" id="cslide" min="20" max="100" value="45">
+      <div class="dist" id="cdist" style="--lw:64px"></div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:18px;
+        border-top:1px solid var(--rule); padding-top:14px">
+        <span class="lab">confiance</span>
+        <span class="num" id="cval" style="font-size:30px; font-weight:500; color:var(--jev)">0.18</span>
+      </div>
+      <div style="font-size:12.5px; color:var(--ink3); margin-top:10px; line-height:1.5" id="cmsg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 ================= -->
+<section id="s3">
+  <div class="shead"><div class="n">03</div>
+    <div><h2>Essayer</h2>
+    <p class="sub">Les questions ci-dessous sont exactement celles des deux campagnes de mesure,
+    pas des exemples de démonstration. Choisissez un texte, ou écrivez le vôtre.</p></div>
+  </div>
+
+  <div class="seg" id="segS3">
+    <button data-t="noul" class="on">noul &middot; hate speech</button>
+    <button data-t="choice">choice &middot; reranker</button>
+    <button data-t="score">score &middot; sentiment</button>
+  </div>
+
+  <div style="margin-top:22px" id="s3intro" class="body"></div>
+
+  <div style="margin-top:20px">
+    <div class="lab" style="margin-bottom:10px">Textes préparés</div>
+    <div class="chips" id="s3chips"></div>
+  </div>
+
+  <div style="margin-top:20px">
+    <textarea id="s3txt" spellcheck="false"></textarea>
+    <div style="display:flex; gap:12px; align-items:center; margin-top:14px; flex-wrap:wrap">
+      <button class="btn" id="s3go">Demander à Jev</button>
+      <span class="meta" id="s3meta"></span>
+    </div>
+    <div style="font-size:12.5px; color:var(--ink3); margin-top:10px; line-height:1.5" id="s3note"></div>
+  </div>
+
+  <div class="card" style="margin-top:24px">
+    <div class="hd"><span class="lab">Réponse</span><span id="s3src"></span></div>
+    <div class="bd"><div class="dist" id="s3out" style="--lw:132px"></div>
+      <div id="s3read" style="margin-top:18px; font-size:14.5px; color:var(--ink2); line-height:1.55"></div>
+    </div>
+  </div>
+  <details><summary>La requête envoyée, en entier</summary><div class="in"><pre id="s3req"></pre></div></details>
+</section>
+
+<!-- ================= 04 ================= -->
+<section id="s4">
+  <div class="shead"><div class="n">04</div>
+    <div><h2>Est-ce qu'il remplace le reranker ?</h2>
+    <p class="sub">Sélectionner le narratif qu'un post exprime, parmi cinq claims déjà filtrés par
+    l'embedder. 333 posts annotés à la main, 3 sujets, 2 langues, 6 formes de prompt, 3 exécutions
+    chacune.</p></div>
+  </div>
+
+  <div class="body">
+    <p>Le portage est direct : les cinq claims ne sont plus du texte dans un prompt, ils deviennent
+    l'espace de réponse déclaré. Une <span class="mono">choice</span> à six options, les cinq claims
+    plus un « aucun ».</p>
+  </div>
+  <details open><summary>Le prompt brut, tel qu'il part</summary><div class="in"><pre id="s4req"></pre></div></details>
+
+  <h3 style="font-size:23px; margin:44px 0 6px">Le cas qu'il rate</h3>
+  <p class="body" style="color:var(--ink2); font-size:15px">Vérité terrain : le claim 1. Ce qui suit
+  est la réponse réelle de l'API, rejouée à l'instant où cette page a été fabriquée.</p>
+
+  <div class="g2" style="margin-top:22px; align-items:start">
+    <div>
+      <div class="lab" style="margin-bottom:10px">Les 5 claims retenus par l'embedder</div>
+      <div class="dist" id="s4cos" style="--lw:26px"></div>
+      <div class="lab" style="margin:22px 0 10px">Ce que Jev répond</div>
+      <div class="dist" id="s4prob" style="--lw:26px"></div>
+      <div class="meta" style="margin-top:16px" id="s4meta"></div>
+    </div>
+    <div>
+      <div class="card"><div class="hd"><span class="lab">Lecture</span></div><div class="bd" id="s4lect" style="font-size:14.5px; color:var(--ink2); line-height:1.6"></div></div>
+    </div>
+  </div>
+
+  <h3 style="font-size:23px; margin:52px 0 6px">La rédaction du prompt, elle, ne change rien</h3>
+  <p class="body" style="color:var(--ink2); font-size:15px">Six formes mesurées. Les quatre variantes
+  <span class="mono">choice</span> tiennent dans trois points, sous le plancher de bruit du jeu.
+  Pour comparaison, la même campagne de réécriture déplaçait jusqu'à 29 points sur un modèle de chat.</p>
+  <div style="margin-top:18px; overflow-x:auto"><table id="s4var"></table></div>
+  <div style="font-size:12.5px; color:var(--ink3); margin-top:12px; line-height:1.5; max-width:70ch">
+    Scores de l'ablation, sur les 333 posts en un seul lot. Le banc final ci-dessous pondère les trois
+    sujets séparément, d'où le léger écart.</div>
+
+  <h3 style="font-size:23px; margin:52px 0 6px">Le banc final</h3>
+  <p class="body" style="color:var(--ink2); font-size:15px">Classification des narratifs et rejet du
+  hors-narratif, pondérés sur les trois benchs. Temps et coût pour un million de posts.</p>
+  <div style="overflow-x:auto; margin-top:20px"><table id="s4fin"></table></div>
+  <div style="margin-top:26px"><div class="lab" style="margin-bottom:12px">Coût de Jev selon le volume</div>
+    <div id="s4vol"></div></div>
+  <div class="note"><b>La production reste devant, sur les trois axes.</b> Environ 6 points de
+  classification et 11 de rejet en moins, 9 % plus cher, et presque deux fois plus lent au débit
+  contractuel. Le niveau atteint est celui de GPT-4o mini, en dessous de tous les Claude, Mistral et
+  GPT-5.6 du banc.</div>
+  <div class="note" style="border-color:var(--ink3)"><b>Pourquoi 13,9 h et pas 1,3 h.</b> Le temps est
+  borné par la limite annoncée, 1 200 requêtes par minute. En test, 1 800 requêtes à 64 en parallèle
+  ont tenu 213 req/s, soit dix fois la limite, toutes en 200 et sans un seul 429. Un million de posts
+  passerait alors en 1,3 h. Ce débit n'est pas contractuel, donc il n'est pas retenu au banc.</div>
+</section>
+
+<!-- ================= 05 ================= -->
+<section id="s5">
+  <div class="shead"><div class="n">05</div>
+    <div><h2>Est-ce qu'il remplace la détection de haine ?</h2>
+    <p class="sub">Deux étapes en production : une gate décide si le texte est haineux, puis huit
+    classifieurs disent quel axe est visé. 1 200 lignes de test par axe, seuils calibrés sur un jeu
+    de validation séparé, protocole repris à l'identique du banc Shieldstral.</p></div>
+  </div>
+
+  <div class="body">
+    <p>Un post peut viser la race <b>et</b> la religion <b>et</b> l'origine. Le problème est donc
+    multi-label, et c'est pour ça qu'on pose huit <span class="mono">noul</span> plutôt qu'une
+    <span class="mono">choice</span> : une choice forcerait un axe unique. Neuvième question dans
+    le même appel, la gate elle-même.</p>
+    <p><b>La différence structurelle avec Shieldstral :</b> Shieldstral fait une passe GPU par axe,
+    Jev ingère le texte une fois et évalue les neuf questions en parallèle. Pour couvrir le jeu de
+    test, 12 865 passes GPU contre 8 961 appels. Ajouter un neuvième axe coûte quelques jetons chez
+    Jev, 8 961 passes GPU chez Shieldstral, et des milliers d'annotations chez nous.</p>
+  </div>
+
+  <div style="margin-top:26px"><div class="lab" style="margin-bottom:10px">Les 5 textes mesurés</div>
+    <div class="chips" id="s5chips"></div></div>
+  <div class="g2" style="margin-top:20px; align-items:start">
+    <div>
+      <div class="card"><div class="hd"><span class="lab">Le texte</span><span class="tag" id="s5lg"></span></div>
+        <div class="bd"><div class="mono" id="s5txt" style="font-size:13.5px; line-height:1.55"></div></div></div>
+      <div style="font-size:13px; color:var(--ink3); margin-top:12px; line-height:1.5" id="s5note"></div>
+    </div>
+    <div><div class="lab" style="margin-bottom:12px">Les 9 réponses, un seul appel</div>
+      <div class="dist" id="s5dist" style="--lw:88px"></div>
+      <div class="meta" style="margin-top:16px" id="s5meta"></div></div>
+  </div>
+  <details><summary>La batterie complète, telle qu'elle part</summary><div class="in"><pre id="s5req"></pre></div></details>
+
+  <h3 style="font-size:23px; margin:52px 0 6px">Quel axe est visé, après le gate (cas oracle)</h3>
+  <p class="body" style="color:var(--ink2); font-size:15px">Gate figée au label, la seule condition
+  où l'on compare les classifieurs et pas les gates. F1 par axe, les trois modèles.</p>
+  <div style="margin-top:22px" id="s5chart"></div>
+  <div class="leg"><span><i style="background:var(--jev)"></i>Jev</span>
+    <span><i style="background:var(--shield)"></i>Shieldstral</span>
+    <span><i style="background:var(--prod)"></i>nos 8 mDeBERTa</span></div>
+
+  <h3 style="font-size:23px; margin:52px 0 6px">Ce que Jev apporte vraiment : la calibration</h3>
+  <p class="body" style="color:var(--ink2); font-size:15px">On range les scores par tranches de 0,1 et
+  on compare la probabilité annoncée au taux réel de positifs dedans. La diagonale est la perfection.</p>
+  <div class="g2" style="margin-top:22px; align-items:start">
+    <div id="s5calib"></div>
+    <div>
+      <div class="kpi" style="margin-top:0"><div><div class="v j">0,037</div><div class="k">ECE Jev</div></div>
+        <div><div class="v">0,123</div><div class="k">ECE Shieldstral</div></div></div>
+      <p style="font-size:15px; color:var(--ink2)">Quand Shieldstral annonce 0,75, le taux réel est 0,40.
+      Jev annonce 0,755 pour 0,59. Les deux surestiment, Shieldstral 3,4 fois plus.</p>
+      <p style="font-size:15px; color:var(--ink2); margin-bottom:0"><b>Ce que ça change concrètement :</b>
+      avec un modèle calibré on fixe un seuil par le risque métier, « je n'accepte pas plus de 30 % de
+      faux positifs ». Avec Shieldstral, le score n'est qu'un softmax de deux logits, il faut un jeu
+      annoté par axe et par langue pour trouver le seuil. C'est exactement le travail qu'on ne peut pas
+      refaire à chaque nouvel axe.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ================= 06 ================= -->
+<section id="s6">
+  <div class="shead"><div class="n">06</div>
+    <div><h2>Verdict</h2>
+    <p class="sub">Cinq questions, cinq réponses. Rien ici ne repose sur une plaquette du fournisseur.</p></div>
+  </div>
+  <div id="s6list"></div>
+
+  <div class="g2" style="margin-top:46px; align-items:start">
+    <div>
+      <h3 style="font-size:21px; margin-bottom:10px">La réserve qui décide</h3>
+      <p style="font-size:15px; color:var(--ink2)">Jev est une <b>API fermée</b>. Pas de poids, pas
+      d'auto-hébergement, taille du modèle non publiée. Shieldstral est Apache 2.0, nos mDeBERTa sont
+      à nous.</p>
+      <p style="font-size:15px; color:var(--ink2); margin-bottom:0">Jev ne peut donc pas être une brique
+      souveraine, quels que soient ses chiffres. Ça ne l'empêche pas de servir hors production, pour
+      prototyper un axe ou produire des labels.</p>
+    </div>
+    <div>
+      <h3 style="font-size:21px; margin-bottom:10px">Trois réserves de méthode</h3>
+      <ul class="fail" style="padding:0; margin:0">
+        <li class="bad"><span class="m">!</span><div><b>Le débit affiché n'est pas le débit servi.</b>
+          213 req/s tenues en test contre 20 annoncées, sans un seul 429. Le banc retient la limite
+          contractuelle, 13,9 h par million, et pas les 1,3 h mesurées. Dimensionner sur ce qui est
+          écrit au contrat.</div></li>
+        <li class="bad"><span class="m">!</span><div><b>Le <span class="mono">state</span> n'est pas
+          traité comme hostile.</b> La doc l'admet : une instruction injectée dans le texte jugé peut
+          déplacer la réponse. Sur une tâche de modération, dont la population est adverse par nature,
+          c'est un préalable et pas un item de backlog.</div></li>
+        <li class="bad"><span class="m">!</span><div><b>Les jeux de haine sont académiques.</b>
+          HateXplain, GHC et MHS sont anglophones d'origine. Rien n'a encore été mesuré sur du corpus
+          client réel.</div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <b>Sources.</b> Campagne reranker, 6 194 appels, 0,23 $. Campagne hate speech du 23/09/2026,
+  8 161 appels, 0,61 $, commit 6807993. Réponses de l'API de cette page rejouées le 27/09/2026.<br>
+  <b>Protocole.</b> Seuils calibrés sur validation, résultats rapportés sur test. Les scores de
+  Shieldstral et des 8 mDeBERTa sont relus depuis le banc d'origine, jamais recalculés ici.<br>
+  <b>Estimations.</b> Les deux lignes Gemma 4 12B du banc reranker sont estimées et marquées comme
+  telles. Tout le reste est mesuré.
+</footer>
+<script id="donnees" type="application/json">{"presets":{"noul":{"questions":{"is_hate":{"type":"noul","instructions":"Is this post offensive, insulting, demeaning or hateful toward a person or a group?","criteria":{"true":"Counts as yes, all equally: severe hate speech, threats, calls for violence, dehumanisation; ordinary insults and name-calling aimed at a person or a group; slurs of any kind, even in passing or as a joke; demeaning generalisations about a group; crude sexual or scatological abuse aimed at someone; mockery, contempt and belittling. When hesitating between merely rude and harmless, answer yes.","false":"Counts as no: profanity with no target such as 'this fucking traffic' or 'putain ce film etait nul'; neutral, factual or journalistic mentions of any group; counter-speech that condemns hatred; a slur quoted in order to criticise it."}},"race":{"type":"noul","instructions":"Are people attacked here because of their race, ethnicity, skin colour or phenotype (for example Black, White, Asian, Arab, Hispanic or Indigenous people)? Slurs count on their own. EN: nigger, nigga used as an insult, coon, chink, gook, wetback, sand nigger. FR: negre, negresse, bougnoule, chinetoque, bamboula.","criteria":{"true":"The post attacks, demeans or insults people over their race, ethnicity, skin colour or phenotype, or uses a racial slur.","false":"The post does not attack anyone on racial grounds. It may mention a racial group neutrally, or attack people on some other ground."}},"religion":{"type":"noul","instructions":"Are people attacked here because of their religion, religious identity or absence of religion (for example Muslims, Christians, Jews, Hindus, Buddhists or atheists)? Slurs count on their own. EN: muzzie, raghead, kike, christfag, towelhead. FR: youpin, feuj used as an insult, mahometan used with contempt.","criteria":{"true":"The post attacks, demeans or insults people over their religion or lack of religion, or uses a religious slur. Antisemitism counts here.","false":"The post does not attack anyone on religious grounds. It may mention a religion neutrally, or attack people on some other ground."}},"origin":{"type":"noul","instructions":"Are people attacked here because of their nationality, their country or region of origin, or their immigration status (immigrants, refugees, migrants, foreigners, or a named nationality)? Slurs count on their own. EN: 'go back to your country', wetback, 'invaders', 'illegals' used with contempt. FR: clandestins used with contempt, 'rentre dans ton pays', meteque, envahisseurs.","criteria":{"true":"The post attacks, demeans or insults people over their nationality, origin or migrant status.","false":"The post does not attack anyone on those grounds. It may mention a nationality neutrally, or attack people on some other ground."}},"gender":{"type":"noul","instructions":"Are people attacked here because of their sex or gender identity (women, men, or transgender and non-binary people)? Slurs count on their own. EN: bitch, whore, slut, cunt, roastie, femoid, tranny. FR: salope, pute, putain used against a person, connasse, grognasse, garce, travelo, femelle used with contempt.","criteria":{"true":"The post attacks people over their sex or gender identity. This includes misogyny, sexism, sexual objectification, denial of competence or intelligence based on sex, and gendered slurs. Statements presenting one sex as inferior, stupid, hysterical or fit only for domestic or sexual roles count EVEN when phrased calmly or presented as a fact, for example 'women are too emotional to lead' or 'les femmes sont faites pour la cuisine'.","false":"The post does not attack anyone over sex or gender identity."}},"sexuality":{"type":"noul","instructions":"Are people attacked here because of their sexual orientation (gay, lesbian, bisexual, heterosexual or asexual people)? Slurs count on their own. EN: faggot, fag, dyke, queer used as an insult, batty boy. FR: pede, tapette, gouine, tantouze, encule when aimed at gay people.","criteria":{"true":"The post attacks, demeans or insults people over their sexual orientation, or uses a homophobic slur.","false":"The post does not attack anyone over sexual orientation."}},"age":{"type":"noul","instructions":"Are people attacked here because of their age (old people, the elderly, boomers, young people, teenagers, children, zoomers)?","criteria":{"true":"The post attacks, demeans or mocks people because of how old or how young they are.","false":"The post does not attack anyone over their age."}},"disability":{"type":"noul","instructions":"Does this post use a disability-related slur or insult, or attack people because of a physical, mental or cognitive disability? Slurs count on their own. EN: retard, retarded, spaz, spastic, cripple, mongoloid, 'autistic' used as an insult, sperg. FR: attarde, mongol, debile, trisomique or handicape used as an insult.","criteria":{"true":"The post uses a disability-related slur or insult, OR attacks people over a disability. Answer yes EVEN WHEN the target is not actually disabled: this question detects disability-based insults as such. \"that's such a retarded take\" is yes. \"espece de mongol\" is yes.","false":"The post contains no disability-related slur and attacks nobody over a disability. A neutral or respectful mention of disability is no."}},"political":{"type":"noul","instructions":"Are people attacked here because of their political affiliation, ideology or partisan identity (liberals, conservatives, leftists, right-wingers, communists, fascists, or the supporters of a party)? Slurs count on their own. EN: libtard, leftard, 'liberal scum', commie, repuglican, snowflake used politically. FR: gauchiste used with contempt, facho, bobo used with contempt, droitard, 'islamo-gauchiste'.","criteria":{"true":"The post attacks, demeans or insults people over their politics, their ideology or the party they support.","false":"The post does not attack anyone over politics. Criticising a policy or a named politician's actions, without demeaning their camp, is no."}}},"exemples":[{"id":"sexisme-calme","langue":"EN","attendu":"gender + is_hate","note":"Sexisme enonce calmement, comme un fait. Sans criteria.true, Jev repond non.","texte":"Women are simply too emotional to be trusted with leadership positions. It is a biological fact."},{"id":"contre-discours","langue":"EN","attendu":"aucun axe","note":"Contre-discours. Nomme la haine pour la condamner. criteria.false le sort.","texte":"Reporting on the rise of antisemitic attacks across Europe this year is essential journalism, not hate."},{"id":"age-fr","langue":"FR","attendu":"age + is_hate","note":"Francais. Les 9 questions restent en anglais, le texte non.","texte":"Les boomers ont pourri le pays, ils feraient mieux d'arreter de voter avant de tout casser."},{"id":"juron-sans-cible","langue":"FR","attendu":"aucun axe","note":"Juron sans cible. Le faux positif classique d'une gate de moderation.","texte":"Putain ce film etait nul, deux heures de ma vie perdues, quelle arnaque."},{"id":"multi-axes","langue":"EN","attendu":"origin + religion + is_hate","note":"Deux axes a la fois. C'est pour ca qu'on pose 9 noul et pas un choice.","texte":"These migrants bring their backward religion with them and expect us to adapt. Send them all back."}],"axes":["is_hate","race","religion","origin","gender","sexuality","age","disability","political"]},"choice":{"questions":{"claim":{"type":"choice","instructions":"Which claim, if any, does the text express?\n\nDEFINITION\nA text expresses a narrative when it endorses an ideological thesis (a named actor plus a causal relation or a value judgement) and that thesis is one of the claims in the list, in the same direction as that claim.\nA text that reports a fact, asks a question, quotes without endorsing, contradicts the claim, or carries a thesis that is not in the list does not express a narrative.\n\nMake sure that the claim you select is actually supported by the text, and not opposite to it.\nYou can select a claim even if the text differs from it, as long as it reinforces the same narrative.\nChoose the most fitting one if there is more than one option.","criteria":{"1":{"what":"Turkey is an unreliable NATO ally that sides with Iran, promotes Islamist interests, and undermines the Western alliance.","not_for":"Texts that discuss the same subject, the same target or the same general political direction without endorsing this specific thesis."},"2":{"what":"Europe freeloads off American security and the Iran crisis has exposed NATO as a one-sided alliance that no longer serves US interests.","not_for":"Texts that discuss the same subject, the same target or the same general political direction without endorsing this specific thesis."},"3":{"what":"The US-Israeli war on Iran is not a NATO collective defense matter, and European allies have no obligation to join and are justified in refusing.","not_for":"Texts that discuss the same subject, the same target or the same general political direction without endorsing this specific thesis."},"4":{"what":"Trump acts like a mafia boss threatening Europe with NATO withdrawal to force them into his disastrous Iran war.","not_for":"Texts that discuss the same subject, the same target or the same general political direction without endorsing this specific thesis."},"5":{"what":"Israel is driving an illegitimate, self-serving war against Iran, dragging in or backed by the US and NATO.","not_for":"Texts that discuss the same subject, the same target or the same general political direction without endorsing this specific thesis."},"0":{"what":"The text does not express any of the claims listed above.","examples":["The text reports a fact without endorsing any thesis.","The text asks a question.","The text quotes a claim without endorsing it.","The text contradicts every claim listed.","The text carries a thesis that is not in the list."]}}}},"exemples":[{"id":"turquie","verite":"1","note":"Le cas documente du benchmark. L'argmax repond 0, la verite est 1.","texte":"Turkey remembered NATO now that she is afraid of whats happening in the Middle East and because she knows she is next after Iran."},{"id":"freeloading","verite":"2","note":"Porteur net. Le claim 2 presque mot pour mot.","texte":"Europe has been freeloading on American taxpayers for seventy years. The Iran crisis finally shows NATO for what it is, a one way street."},{"id":"depeche","verite":"0","note":"Depeche factuelle. Doit etre rejetee, et elle l'est.","texte":"NATO foreign ministers will meet in Brussels on Thursday to discuss the situation in the Middle East, an alliance spokesperson said."},{"id":"question","verite":"0","note":"Question rhetorique. Le registre ou Jev hesite le plus.","texte":"Serious question: if Turkey is such a liability, why has no member state ever proposed suspending its NATO membership?"},{"id":"contradiction","verite":"0","note":"Contredit le claim 1. Le piege : meme sujet, direction inverse.","texte":"People calling Turkey a traitor forget it has the second largest army in NATO and has held the southern flank for decades."}],"claims":{"1":"Turkey is an unreliable NATO ally that sides with Iran, promotes Islamist interests, and undermines the Western alliance.","2":"Europe freeloads off American security and the Iran crisis has exposed NATO as a one-sided alliance that no longer serves US interests.","3":"The US-Israeli war on Iran is not a NATO collective defense matter, and European allies have no obligation to join and are justified in refusing.","4":"Trump acts like a mafia boss threatening Europe with NATO withdrawal to force them into his disastrous Iran war.","5":"Israel is driving an illegitimate, self-serving war against Iran, dragging in or backed by the US and NATO."}},"score":{"questions":{"sentiment":{"type":"score","instructions":"How positive or negative is the opinion the author of this text expresses?","criteria":[{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},{"what":"The author is positive: approval, satisfaction, moderate praise."},{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}]}},"exemples":[{"id":"fr-colere","langue":"FR","note":"Francais, colere nette. Une des 6 langues de nlptown.","texte":"Franchement ce service est une catastrophe absolue, je resilie des demain."},{"id":"en-enthousiaste","langue":"EN","note":"Anglais, la langue principale annoncee du modele.","texte":"Honestly the best update they have shipped in years, everything just works now."},{"id":"bg-cyrillique","langue":"BG","note":"Bulgare en cyrillique. Hors des 6 langues de nlptown.","texte":"Това е пълна загуба на време, съжалявам че се записах за този курс."},{"id":"bg-translitere","langue":"BG","note":"LA MEME phrase, translitteree en latin. Comparer la confiance.","texte":"Tova e pulna zaguba na vreme, suzhalyavam che se zapisah za tozi kurs."},{"id":"mt-maltais","langue":"MT","note":"Maltais. La langue la plus rare de l'UE.","texte":"Dan is-servizz huwa terribbli, qatt aktar ma nerga nuzah."},{"id":"fr-mitige","langue":"FR","note":"Mitige. C'est la que le score fractionnaire sert a quelque chose.","texte":"L'interface est jolie et rapide, mais le support met trois jours a repondre."}],"niveaux":[{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},{"what":"The author is positive: approval, satisfaction, moderate praise."},{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}]}},"reponses":{"noul":{"sexisme-calme":{"model":"jev-1.13.0","answers":{"is_hate":{"type":"noul","noul":0.98},"race":{"type":"noul","noul":0.02},"religion":{"type":"noul","noul":0.01},"origin":{"type":"noul","noul":0.01},"gender":{"type":"noul","noul":0.99},"sexuality":{"type":"noul","noul":0.02},"age":{"type":"noul","noul":0.01},"disability":{"type":"noul","noul":0.02},"political":{"type":"noul","noul":0.02}},"usage":{"input_tokens":1764,"output_tokens":158},"_ms":334},"contre-discours":{"model":"jev-1.13.0","answers":{"is_hate":{"type":"noul","noul":0.02},"race":{"type":"noul","noul":0.11},"religion":{"type":"noul","noul":0.14},"origin":{"type":"noul","noul":0.06},"gender":{"type":"noul","noul":0.02},"sexuality":{"type":"noul","noul":0.03},"age":{"type":"noul","noul":0.03},"disability":{"type":"noul","noul":0.01},"political":{"type":"noul","noul":0.05}},"usage":{"input_tokens":1767,"output_tokens":158},"_ms":249},"age-fr":{"model":"jev-1.13.0","answers":{"is_hate":{"type":"noul","noul":0.95},"race":{"type":"noul","noul":0.02},"religion":{"type":"noul","noul":0.02},"origin":{"type":"noul","noul":0.02},"gender":{"type":"noul","noul":0.03},"sexuality":{"type":"noul","noul":0.01},"age":{"type":"noul","noul":0.99},"disability":{"type":"noul","noul":0.02},"political":{"type":"noul","noul":0.16}},"usage":{"input_tokens":1770,"output_tokens":158},"_ms":261},"juron-sans-cible":{"model":"jev-1.13.0","answers":{"is_hate":{"type":"noul","noul":0.08},"race":{"type":"noul","noul":0.01},"religion":{"type":"noul","noul":0.02},"origin":{"type":"noul","noul":0.01},"gender":{"type":"noul","noul":0.05},"sexuality":{"type":"noul","noul":0.01},"age":{"type":"noul","noul":0.01},"disability":{"type":"noul","noul":0.02},"political":{"type":"noul","noul":0.01}},"usage":{"input_tokens":1768,"output_tokens":158},"_ms":276},"multi-axes":{"model":"jev-1.13.0","answers":{"is_hate":{"type":"noul","noul":0.98},"race":{"type":"noul","noul":0.21},"religion":{"type":"noul","noul":0.86},"origin":{"type":"noul","noul":0.96},"gender":{"type":"noul","noul":0.03},"sexuality":{"type":"noul","noul":0.03},"age":{"type":"noul","noul":0.02},"disability":{"type":"noul","noul":0.02},"political":{"type":"noul","noul":0.12}},"usage":{"input_tokens":1765,"output_tokens":158},"_ms":245}},"choice":{"turquie":{"model":"jev-1.13.0","answers":{"claim":{"type":"choice","choice":"0","confidence":0.7,"probabilities":{"3":0.0,"5":0.01,"4":0.0,"0":0.76,"2":0.02,"1":0.21000000000000002}}},"usage":{"input_tokens":933,"output_tokens":59},"_ms":234},"freeloading":{"model":"jev-1.13.0","answers":{"claim":{"type":"choice","choice":"2","confidence":1.0,"probabilities":{"3":0.0,"5":0.0,"4":0.0,"0":0.0,"2":1.0,"1":0.0}}},"usage":{"input_tokens":937,"output_tokens":59},"_ms":287},"depeche":{"model":"jev-1.13.0","answers":{"claim":{"type":"choice","choice":"0","confidence":1.0,"probabilities":{"0":1.0,"5":0.0,"1":0.0,"4":0.0,"2":0.0,"3":0.0}}},"usage":{"input_tokens":932,"output_tokens":59},"_ms":252},"question":{"model":"jev-1.13.0","answers":{"claim":{"type":"choice","choice":"0","confidence":0.93,"probabilities":{"0":0.95,"2":0.0,"5":0.0,"4":0.0,"1":0.05,"3":0.0}}},"usage":{"input_tokens":933,"output_tokens":59},"_ms":406},"contradiction":{"model":"jev-1.13.0","answers":{"claim":{"type":"choice","choice":"0","confidence":0.96,"probabilities":{"4":0.0,"3":0.0,"1":0.03,"5":0.0,"0":0.97,"2":0.0}}},"usage":{"input_tokens":933,"output_tokens":59},"_ms":260}},"score":{"fr-colere":{"model":"jev-1.13.0","answers":{"sentiment":{"type":"score","score":0.0,"confidence":1.0,"legend":{"0":{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},"1":{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},"2":{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},"3":{"what":"The author is positive: approval, satisfaction, moderate praise."},"4":{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}},"probabilities":{"0":1.0,"1":0.0,"2":0.0,"3":0.0,"4":0.0}}},"usage":{"input_tokens":441,"output_tokens":18},"_ms":308},"en-enthousiaste":{"model":"jev-1.13.0","answers":{"sentiment":{"type":"score","score":3.99,"confidence":1.0,"legend":{"0":{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},"1":{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},"2":{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},"3":{"what":"The author is positive: approval, satisfaction, moderate praise."},"4":{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}},"probabilities":{"0":0.0,"1":0.0,"2":0.0,"3":0.0,"4":1.0}}},"usage":{"input_tokens":438,"output_tokens":18},"_ms":279},"bg-cyrillique":{"model":"jev-1.13.0","answers":{"sentiment":{"type":"score","score":0.82,"confidence":0.85,"legend":{"0":{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},"1":{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},"2":{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},"3":{"what":"The author is positive: approval, satisfaction, moderate praise."},"4":{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}},"probabilities":{"0":0.18,"1":0.82,"2":0.0,"3":0.0,"4":0.0}}},"usage":{"input_tokens":464,"output_tokens":18},"_ms":280},"bg-translitere":{"model":"jev-1.13.0","answers":{"sentiment":{"type":"score","score":0.7,"confidence":0.42,"legend":{"0":{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},"1":{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},"2":{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},"3":{"what":"The author is positive: approval, satisfaction, moderate praise."},"4":{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}},"probabilities":{"0":0.48,"1":0.43,"2":0.01,"3":0.06,"4":0.02}}},"usage":{"input_tokens":448,"output_tokens":18},"_ms":278},"mt-maltais":{"model":"jev-1.13.0","answers":{"sentiment":{"type":"score","score":0.04,"confidence":0.97,"legend":{"0":{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},"1":{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},"2":{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},"3":{"what":"The author is positive: approval, satisfaction, moderate praise."},"4":{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}},"probabilities":{"0":0.96,"1":0.04,"2":0.0,"3":0.0,"4":0.0}}},"usage":{"input_tokens":444,"output_tokens":18},"_ms":264},"fr-mitige":{"model":"jev-1.13.0","answers":{"sentiment":{"type":"score","score":1.3,"confidence":0.75,"legend":{"0":{"what":"The author is strongly negative: anger, outrage, or a decision to leave, refuse or boycott."},"1":{"what":"The author is negative: complaint, disappointment or criticism, without strong emotion."},"2":{"what":"The author is neutral: a factual statement, a question, or a report carrying no evaluation of their own."},"3":{"what":"The author is positive: approval, satisfaction, moderate praise."},"4":{"what":"The author is strongly positive: enthusiasm, strong recommendation, delight."}},"probabilities":{"0":0.0,"1":0.77,"2":0.16,"3":0.07,"4":0.0}}},"usage":{"input_tokens":443,"output_tokens":18},"_ms":212}}},"cosinus":{"1":0.893,"2":0.8049,"3":0.7467,"4":0.7445,"5":0.666},"reranker":{"variantes":[{"nom":"portage","quoi":"le prompt de prod recopie mot pour mot","classif":0.836,"rejet":0.682,"hs_classif":0.855,"hs_rejet":0.689,"tokens":835},{"nom":"natif","quoi":"seulement les 4 lignes de sens","classif":0.813,"rejet":0.663,"hs_classif":0.852,"hs_rejet":0.705,"tokens":737},{"nom":"natif_struct","quoi":"claims en {what, not_for}","classif":0.806,"rejet":0.654,"hs_classif":0.883,"hs_rejet":0.763,"tokens":951},{"nom":"natif_obj","quoi":"instructions en objet","classif":0.813,"rejet":0.665,"hs_classif":0.846,"hs_rejet":0.702,"tokens":763},{"nom":"natif_regle_globale","quoi":"la restriction ecrite une fois en tete","classif":0.763,"rejet":0.603,"hs_classif":0.83,"hs_rejet":0.667,"tokens":797},{"nom":"noul","quoi":"5 nouls au lieu d'une choice","classif":0.457,"rejet":0.422,"hs_classif":null,"hs_rejet":null,"tokens":1233}],"emplacement":[{"ou":"attachee a chaque option (not_for)","classif":0.883,"rejet":0.763},{"ou":"nulle part","classif":0.852,"rejet":0.705},{"ou":"une fois en tete des instructions","classif":0.83,"rejet":0.667}],"final":[{"modele":"Gemma 4 12B, la production","classif":0.9,"rejet":0.833,"cout":34.72,"heures":7.6,"estime":true},{"modele":"Jev 1.13 (TypeSafe)","classif":0.842,"rejet":0.721,"cout":37.84,"heures":13.9,"estime":false}],"erreurs":{"A":36,"B":15,"C":12},"fiabilite":{"appels":6194,"illisibles":0,"cout":0.23},"benchs":[{"nom":"NATO / Iran","posts":57,"classif":0.92,"rejet":0.667},{"nom":"Immigration","posts":165,"classif":0.823,"rejet":0.667},{"nom":"Retraites","posts":111,"classif":0.826,"rejet":0.815}],"volume":[{"n":"1 000 posts","temps":"50 s","cout":0.04},{"n":"100 000 posts","temps":"1,4 h","cout":3.78},{"n":"1 000 000 posts","temps":"13,9 h","cout":37.84}],"latence":"0,3 s","debit":{"annonce":1200,"mesure_rps":213,"heures_reelles":1.3,"erreurs":0}},"hate":{"etape1":[{"modele":"Jev","p":0.626,"r":0.92,"f1":0.745,"auc":0.825},{"modele":"Shieldstral","p":0.599,"r":0.757,"f1":0.669,"auc":0.691}],"gate_seuils":[{"seuil":0.3,"precision":0.6,"recall":0.96,"f1":0.738},{"seuil":0.5,"precision":0.626,"recall":0.92,"f1":0.745},{"seuil":0.7,"precision":0.656,"recall":0.85,"f1":0.74},{"seuil":0.9,"precision":0.767,"recall":0.67,"f1":0.715}],"etape2":[{"axe":"race","jev":0.767,"shield":0.839,"nos":0.832,"jev_p":0.7,"jev_r":0.848,"shield_p":0.811,"shield_r":0.869,"nos_p":0.864,"nos_r":0.803},{"axe":"religion","jev":0.83,"shield":0.868,"nos":0.893,"jev_p":0.728,"jev_r":0.964,"shield_p":0.819,"shield_r":0.922,"nos_p":0.918,"nos_r":0.87},{"axe":"origin","jev":0.682,"shield":0.729,"nos":0.811,"jev_p":0.629,"jev_r":0.745,"shield_p":0.795,"shield_r":0.673,"nos_p":0.822,"nos_r":0.801},{"axe":"gender","jev":0.718,"shield":0.685,"nos":0.854,"jev_p":0.608,"jev_r":0.876,"shield_p":0.547,"shield_r":0.916,"nos_p":0.856,"nos_r":0.851},{"axe":"sexuality","jev":0.891,"shield":0.908,"nos":0.913,"jev_p":0.933,"jev_r":0.852,"shield_p":0.884,"shield_r":0.934,"nos_p":0.945,"nos_r":0.883},{"axe":"age","jev":0.909,"shield":0.829,"nos":0.783,"jev_p":0.909,"jev_r":0.909,"shield_p":0.895,"shield_r":0.773,"nos_p":0.75,"nos_r":0.818},{"axe":"disability","jev":0.948,"shield":0.813,"nos":0.966,"jev_p":0.963,"jev_r":0.933,"shield_p":0.876,"shield_r":0.759,"nos_p":0.979,"nos_r":0.954},{"axe":"political","jev":0.66,"shield":0.818,"nos":0.819,"jev_p":0.633,"jev_r":0.69,"shield_p":0.784,"shield_r":0.855,"nos_p":0.875,"nos_r":0.77},{"axe":"macro","jev":0.801,"shield":0.811,"nos":0.859,"jev_p":0.763,"jev_r":0.852,"shield_p":0.801,"shield_r":0.838,"nos_p":0.876,"nos_r":0.844}],"calibration":[{"modele":"jev","tranche":"0.0-0.1","n":5646,"annonce":0.029,"reel":0.011},{"modele":"jev","tranche":"0.1-0.2","n":687,"annonce":0.139,"reel":0.132},{"modele":"jev","tranche":"0.2-0.3","n":335,"annonce":0.247,"reel":0.2},{"modele":"jev","tranche":"0.3-0.4","n":209,"annonce":0.348,"reel":0.34},{"modele":"jev","tranche":"0.4-0.5","n":186,"annonce":0.445,"reel":0.328},{"modele":"jev","tranche":"0.5-0.6","n":200,"annonce":0.547,"reel":0.43},{"modele":"jev","tranche":"0.6-0.7","n":168,"annonce":0.656,"reel":0.536},{"modele":"jev","tranche":"0.7-0.8","n":161,"annonce":0.755,"reel":0.59},{"modele":"jev","tranche":"0.8-0.9","n":237,"annonce":0.848,"reel":0.738},{"modele":"jev","tranche":"0.9-1.0","n":702,"annonce":0.958,"reel":0.856},{"modele":"shieldstral","tranche":"0.0-0.1","n":4118,"annonce":0.03,"reel":0.011},{"modele":"shieldstral","tranche":"0.1-0.2","n":784,"annonce":0.141,"reel":0.069},{"modele":"shieldstral","tranche":"0.2-0.3","n":648,"annonce":0.247,"reel":0.122},{"modele":"shieldstral","tranche":"0.3-0.4","n":402,"annonce":0.347,"reel":0.152},{"modele":"shieldstral","tranche":"0.4-0.5","n":339,"annonce":0.436,"reel":0.236},{"modele":"shieldstral","tranche":"0.5-0.6","n":368,"annonce":0.546,"reel":0.255},{"modele":"shieldstral","tranche":"0.6-0.7","n":300,"annonce":0.65,"reel":0.3},{"modele":"shieldstral","tranche":"0.7-0.8","n":429,"annonce":0.753,"reel":0.403},{"modele":"shieldstral","tranche":"0.8-0.9","n":408,"annonce":0.855,"reel":0.532},{"modele":"shieldstral","tranche":"0.9-1.0","n":735,"annonce":0.956,"reel":0.69}],"ece":{"jev":0.0367,"shieldstral":0.1232},"chaines":{"OpenAI + Jev":[{"axe":"race","f1":0.611,"recall":0.52,"precision":0.741},{"axe":"religion","f1":0.662,"recall":0.552,"precision":0.828},{"axe":"origin","f1":0.512,"recall":0.474,"precision":0.557},{"axe":"gender","f1":0.355,"recall":0.317,"precision":0.403},{"axe":"sexuality","f1":0.76,"recall":0.648,"precision":0.92},{"axe":"age","f1":0.562,"recall":0.409,"precision":0.9},{"axe":"disability","f1":0.836,"recall":0.785,"precision":0.895},{"axe":"political","f1":0.325,"recall":0.235,"precision":0.528}],"OpenAI + Shieldstral":[{"axe":"race","f1":0.67,"recall":0.657,"precision":0.684},{"axe":"religion","f1":0.622,"recall":0.51,"precision":0.797},{"axe":"origin","f1":0.546,"recall":0.515,"precision":0.58},{"axe":"gender","f1":0.344,"recall":0.332,"precision":0.356},{"axe":"sexuality","f1":0.76,"recall":0.663,"precision":0.89},{"axe":"age","f1":0.647,"recall":0.5,"precision":0.917},{"axe":"disability","f1":0.788,"recall":0.723,"precision":0.865},{"axe":"political","f1":0.405,"recall":0.32,"precision":0.552}],"Jev + Jev":[{"axe":"race","f1":0.682,"recall":0.727,"precision":0.643},{"axe":"religion","f1":0.801,"recall":0.807,"precision":0.795},{"axe":"origin","f1":0.632,"recall":0.74,"precision":0.551},{"axe":"gender","f1":0.64,"recall":0.856,"precision":0.51},{"axe":"sexuality","f1":0.862,"recall":0.847,"precision":0.878},{"axe":"age","f1":0.93,"recall":0.909,"precision":0.952},{"axe":"disability","f1":0.925,"recall":0.918,"precision":0.932},{"axe":"political","f1":0.575,"recall":0.565,"precision":0.585}],"sans gate, Jev":[{"axe":"race","f1":0.681,"recall":0.727,"precision":0.64},{"axe":"religion","f1":0.814,"recall":0.833,"precision":0.796},{"axe":"origin","f1":0.632,"recall":0.745,"precision":0.549},{"axe":"gender","f1":0.646,"recall":0.876,"precision":0.512},{"axe":"sexuality","f1":0.863,"recall":0.852,"precision":0.874},{"axe":"age","f1":0.884,"recall":0.864,"precision":0.905},{"axe":"disability","f1":0.931,"recall":0.933,"precision":0.929},{"axe":"political","f1":0.58,"recall":0.61,"precision":0.552}],"sans gate, Shieldstral":[{"axe":"race","f1":0.637,"recall":0.662,"precision":0.615},{"axe":"religion","f1":0.671,"recall":0.771,"precision":0.594},{"axe":"origin","f1":0.515,"recall":0.673,"precision":0.416},{"axe":"gender","f1":0.544,"recall":0.649,"precision":0.468},{"axe":"sexuality","f1":0.778,"recall":0.847,"precision":0.719},{"axe":"age","f1":0.829,"recall":0.773,"precision":0.895},{"axe":"disability","f1":0.665,"recall":0.733,"precision":0.609},{"axe":"political","f1":0.543,"recall":0.595,"precision":0.5}]},"chaines_macro":[{"nom":"OpenAI + Shieldstral","detail":"la production actuelle","f1":0.598,"r":0.528,"prod":true},{"nom":"OpenAI + Jev","detail":"on ne change que l'etape 2","f1":0.578,"r":0.492,"prod":false},{"nom":"Jev + Jev","detail":"on change tout","f1":0.756,"r":0.796,"prod":false},{"nom":"sans gate, Jev","detail":"reference, aucun filtre","f1":0.754,"r":0.805,"prod":false},{"nom":"sans gate, Shieldstral","detail":"reference, aucun filtre","f1":0.648,"r":0.713,"prod":false}],"perte_gate":[{"axe":"race","perdus":52,"total":198},{"axe":"religion","perdus":76,"total":192},{"axe":"origin","perdus":82,"total":196},{"axe":"gender","perdus":132,"total":202},{"axe":"sexuality","perdus":60,"total":196},{"axe":"age","perdus":8,"total":22},{"axe":"disability","perdus":39,"total":195},{"axe":"political","perdus":129,"total":200}],"ablation":[{"nom":"nu","quoi":"la question seule","tokens":608,"f1":0.769,"cout":18},{"nom":"criteres","quoi":"question + argot + criteria.true/false","tokens":1767,"f1":0.816,"cout":53},{"nom":"regles","quoi":"idem + les 8 conventions repetees","tokens":3804,"f1":0.809,"cout":114}],"fiabilite":{"appels":8161,"echecs":0,"retentes":0,"cout":0.61,"secondes":492,"tokens":14535209},"debit":{"annonce_req":1200,"mesure_req":14056,"annonce_tok":250000,"mesure_tok":409276,"med_ms":259,"p95_ms":334,"erreurs429":0},"langue":[{"mode":"pipeline","modele":"Jev","en":0.797,"fr":0.794},{"mode":"pipeline","modele":"Shieldstral","en":0.828,"fr":0.762},{"mode":"pipeline","modele":"nos mDeBERTa","en":0.828,"fr":0.876}]},"modele":{"nom":"jev-1.13.0","alias":"jev-latest","prix":0.042,"contexte":"64k au total, 32k pour state + la plus longue question","licence":"API fermee, pas de poids","max_options":255,"max_crans":10},"appels_total":14355}</script>
+<script>
+const D = JSON.parse(document.getElementById('donnees').textContent);
+const $ = (s,r)=> (r||document).querySelector(s);
+const $$ = (s,r)=> [...(r||document).querySelectorAll(s)];
+const fx = (v,n)=> (v==null?'-':Number(v).toFixed(n==null?3:n).replace('.',','));
+const pc = v => Math.round(v*100)+' %';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function jsonHi(o){
+  const t = typeof o === 'string' ? o : JSON.stringify(o,null,2);
+  return esc(t)
+   .replace(/&quot;/g,'"')
+   .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"(\s*:)/g,'<span class="k">"$1"</span>$2')
+   .replace(/:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g,': <span class="s">"$1"</span>')
+   .replace(/:\s*(-?\d+\.?\d*)/g,': <span class="n">$1</span>');
+}
+/* barres de distribution */
+function dist(node, rows){
+  node.innerHTML = rows.map(r=>`
+    <div class="row ${r.cls||''}">
+      <div class="lb" title="${esc(r.t||'')}">${r.label==null?esc(r.t||''):r.label}</div>
+      <div class="tr">${r.mark!=null?`<div class="seuilline" style="left:${r.mark*100}%" data-v="${r.markLabel||''}"></div>`:''}<div class="fl" data-w="${Math.max(0,Math.min(1,r.v))*100}"></div></div>
+      <div class="vl">${r.vt!=null?r.vt:fx(r.v,2)}</div>
+    </div>`).join('');
+  requestAnimationFrame(()=> $$('.fl',node).forEach(f=> f.style.width = f.dataset.w+'%'));
+}
+function tbl(node, cols, rows){
+  node.innerHTML = `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${
+    rows.map(r=>`<tr class="${r._hi?'hi':''}">${r.c.map((c,i)=>`<td class="${i?'n':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+
+/* ---------- rail : suivi de lecture ---------- */
+const secs = $$('main section');
+const links = $$('.rail a');
+function spy(){
+  const y = scrollY + innerHeight*0.32;
+  let cur = secs[0];
+  secs.forEach(s=>{ if(s.offsetTop <= y) cur = s; });
+  links.forEach(a=> a.classList.toggle('on', a.dataset.s === cur.id));
+  const h = document.documentElement.scrollHeight - innerHeight;
+  $('#railbar').style.width = (h>0 ? Math.min(100, scrollY/h*100) : 0)+'%';
+}
+addEventListener('scroll', spy, {passive:true}); addEventListener('resize', spy);
+
+/* ---------- mode direct ou enregistre ---------- */
+let LIVE = false;
+async function detecter(){
+  try{
+    const r = await fetch('/api/ping', {method:'GET'});
+    if(r.ok){ LIVE = true; }
+  }catch(e){}
+  const n = $('#modeLive');
+  n.className = 'live ' + (LIVE?'on':'off');
+  n.innerHTML = `<i class="dot"></i>${LIVE?'API en direct':'réponses enregistrées'}`;
+}
+async function demander(state, questions){
+  if(!LIVE) return null;
+  const t0 = performance.now();
+  const r = await fetch('/api/jev', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({state, questions})});
+  if(!r.ok) throw new Error('HTTP '+r.status+' '+(await r.text()).slice(0,180));
+  const j = await r.json();
+  j._ms = j._ms || Math.round(performance.now()-t0);
+  return j;
+}
+const cout = tok => (tok * D.modele.prix / 1e6);
+
+/* ================= 01 : deux machines ================= */
+const POST1 = "Turkey remembered NATO now that she is afraid of whats happening in the Middle East and because she knows she is next after Iran.";
+const PLOMBERIE = [
+ ["You are a text classification model.",1],
+ ["You will be given a text and a list of claims.",1],
+ ["If the text supports a claim, respond with that claim's number.",1],
+ ["If the text does not support any claim, respond with 0.",1],
+ ["You can only select a single claim.",1],
+ ["You can use your thinking steps to reason about the answer.",1],
+ ["The final answer should only be the number of the claim.",1],
+ ["",0],
+ ["DEFINITION",0],
+ ["A text expresses a narrative when it endorses an ideological thesis...",0],
+ ["Make sure that the claim you select is actually supported by the text.",0],
+ ["You can select a claim even if the text differs from it.",0],
+ ["Choose the most fitting one if there is more than one option.",0],
+ ["",0],["CLAIMS",0],
+ ["1. Turkey is an unreliable NATO ally that sides with Iran...",0],
+ ["2. Europe freeloads off American security...",0],
+ ["3. ... 4. ... 5. ...",0],
+ ["",0],["TEXT",0],[POST1.slice(0,72)+"...",0],
+];
+const VUES = {
+ req: {
+  a: ()=> `<div class="lab" style="margin-bottom:10px">system + user, 11 lignes utiles</div>
+    <pre style="max-height:330px">${PLOMBERIE.map(([l,p])=>
+      p ? `<span style="opacity:.42; text-decoration:line-through">${esc(l)}</span>` : esc(l)).join('\n')}</pre>
+    <div style="font-size:12.5px; color:var(--ink3); margin-top:11px; line-height:1.5">
+      Les 7 lignes barrées ne décrivent que le format de sortie.</div>`,
+  b: ()=> `<div class="lab" style="margin-bottom:10px">state + questions typées</div>
+    <pre style="max-height:330px">${jsonHi({model:"jev-latest", state:{text:POST1},
+      questions:{claim:{type:"choice", instructions:"Which claim, if any, does the text express? (+ DEFINITION, 4 lignes)",
+      criteria:{"1":"Turkey is an unreliable NATO ally...","2":"Europe freeloads off American security...",
+      "3":"...","4":"...","5":"...","0":"The text does not express any of the claims listed above."}}}})}</pre>
+    <div style="font-size:12.5px; color:var(--ink3); margin-top:11px; line-height:1.5">
+      Le type <span class="mono">choice</span> porte les 7 lignes supprimées.</div>`,
+ },
+ rep: {
+  a: ()=> `<div class="lab" style="margin-bottom:10px">du texte libre, à parser</div>
+    <pre>Looking at this text, the author is suggesting that
+Turkey only turns to NATO out of self-interest and fear,
+which aligns with the idea that Turkey is an unreliable
+ally. This matches claim 1.
+
+<b style="color:var(--ink)">The answer is 1</b></pre>
+    <ul class="fail" style="margin-top:16px">
+      <li class="bad"><span class="m">&times;</span><div>Il faut un parseur, et une reprise quand il échoue</div></li>
+      <li class="bad"><span class="m">&times;</span><div>Aucune probabilité : le chiffre est nu</div></li>
+      <li class="bad"><span class="m">&times;</span><div>Forme typique, non mesurée. Elle varie d'un appel à l'autre</div></li>
+    </ul>`,
+  b: ()=> {
+    const r = D.reponses.choice.turquie;
+    return `<div class="lab" style="margin-bottom:10px">réponse réelle de l'API</div>
+    <pre>${jsonHi({model:r.model, answers:r.answers, usage:r.usage})}</pre>
+    <ul class="fail" style="margin-top:16px">
+      <li class="good"><span class="m">&check;</span><div>Une des clés déclarées, jamais autre chose</div></li>
+      <li class="good"><span class="m">&check;</span><div>La distribution complète, donc une règle de décision possible</div></li>
+      <li class="bad"><span class="m">&times;</span><div>Ici la réponse est <b>fausse</b> : la vérité est le claim 1. Voir la section 04</div></li>
+    </ul>`;
+  },
+ },
+ cass: {
+  a: ()=> `<ul class="fail">
+    <li class="bad"><span class="m">&times;</span><div><b>Réponse hors format.</b> Préambule, explication, deux nombres, un refus</div></li>
+    <li class="bad"><span class="m">&times;</span><div><b>JSON tronqué</b> quand la sortie atteint sa limite</div></li>
+    <li class="bad"><span class="m">&times;</span><div><b>Une option inventée</b> qui n'était pas dans la liste</div></li>
+    <li class="bad"><span class="m">&times;</span><div><b>Température, top_p, budget de réflexion</b> à régler, et à re-régler</div></li>
+    <li class="bad"><span class="m">&times;</span><div><b>Un parseur à maintenir</b>, et son chemin de reprise</div></li>
+    <li class="bad"><span class="m">&times;</span><div><b>7,6 h et 34,72 $</b> par million de posts, au banc reranker</div></li></ul>`,
+  b: ()=> `<ul class="fail">
+    <li class="good"><span class="m">&check;</span><div><b>Impossible par construction.</b> La réponse est une clé déclarée</div></li>
+    <li class="good"><span class="m">&check;</span><div><b>0 réponse illisible</b> sur 14 355 appels des deux campagnes</div></li>
+    <li class="good"><span class="m">&check;</span><div><b>Rien à régler.</b> Ni température, ni top_p, ni réflexion : ça n'existe pas</div></li>
+    <li class="good"><span class="m">&check;</span><div><b>Pas de parseur</b>, donc pas de chemin de reprise</div></li>
+    <li class="good"><span class="m">&check;</span><div><b>Une question de plus</b> coûte quelques jetons et zéro latence : elles partent toutes dans le même appel</div></li>
+    <li class="bad"><span class="m">&times;</span><div><b>13,9 h et 37,84 $</b> par million, au débit contractuel : plus lent et plus cher que la prod</div></li>
+    <li class="bad"><span class="m">&times;</span><div><b>Mais</b> : API fermée, texte seul, et le <span class="mono">state</span> n'est pas traité comme hostile</div></li></ul>`,
+ },
+};
+function vue1(v){
+  $('#s1a').innerHTML = VUES[v].a();
+  $('#s1b').innerHTML = VUES[v].b();
+}
+$$('#segS1 button').forEach(b=> b.onclick = ()=>{
+  $$('#segS1 button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); vue1(b.dataset.v);
+});
+vue1('req');
+
+/* ================= 02 : primitives ================= */
+const PRIM = {
+ noul: {
+  viztitre: "Quatre nouls indépendants sur le même texte",
+  quand: "Un jugement binaire. Chez nous : chaque axe de haine, « ce post attaque-t-il sur la race ? ».",
+  regles: ["Phraser pour qu'une valeur haute veuille dire oui.",
+           "Une seule question par noul. Deux jugements dedans et la valeur ne veut plus rien dire.",
+           "criteria.true prolonge instructions, jamais l'inverse.",
+           "Aucune confiance n'est rendue. Juste la probabilité."],
+  q: ()=> ({is_hate: D.presets.noul.questions.is_hate}),
+  r: ()=> ({answers:{is_hate: D.reponses.noul['sexisme-calme'].answers.is_hate}}),
+  viz: ()=>{
+    const a = D.reponses.noul['sexisme-calme'].answers;
+    return [['is_hate', a.is_hate.noul],['gender', a.gender.noul],['race', a.race.noul],['age', a.age.noul]]
+      .map(([t,v])=>({t, v, cls: v>.5?'j':'mute'}));
+  },
+ },
+ choice: {
+  viztitre: "La distribution, six options",
+  quand: "Une option parmi N, exclusives. Chez nous : le reranker, quel claim ce post exprime, ou aucun.",
+  regles: ["Jusqu'à 255 options.",
+           "Les options peuvent être des objets : what, not_for, examples, voire un sous-arbre.",
+           "Une contrainte s'écrit dans l'option qu'elle concerne, pas en tête des instructions.",
+           "Rend l'option, la distribution complète et une confiance."],
+  q: ()=> ({claim:{type:"choice", instructions:"Which claim, if any, does the text express? (...)",
+            criteria:{"1":{what:"Turkey is an unreliable NATO ally...", not_for:"Texts that discuss the same subject..."},
+                      "0":{what:"The text does not express any of the claims listed above.",
+                           examples:["The text reports a fact without endorsing any thesis.","..."]}}}}),
+  r: ()=> ({answers: D.reponses.choice.turquie.answers}),
+  viz: ()=>{
+    const p = D.reponses.choice.turquie.answers.claim.probabilities;
+    return Object.keys(p).sort((a,b)=>p[b]-p[a]).map(k=>({t:'claim '+k, v:p[k], cls: p[k]>=Math.max(...Object.values(p))?'j':'mute'}));
+  },
+ },
+ score: {
+  viztitre: "La distribution, cinq crans",
+  quand: "Une position sur une échelle ordonnée. Chez nous : l'analyse de sentiment, aujourd'hui sur un BERT à 5 étoiles.",
+  regles: ["De 2 à 10 crans, décrits du plus bas au plus haut.",
+           "Décrire des situations observables, jamais des degrés de gravité.",
+           "Chaque cran est évalué séparément : le modèle ne voit ni son numéro ni ses voisins.",
+           "Rend une moyenne pondérée, donc une position entre deux crans."],
+  q: ()=> D.presets.score.questions,
+  r: ()=> ({answers: D.reponses.score['fr-mitige'].answers}),
+  viz: ()=>{
+    const a = D.reponses.score['fr-mitige'].answers.sentiment, p = a.probabilities;
+    const noms = ['très négatif','négatif','neutre','positif','très positif'];
+    return noms.map((n,i)=>({t:n, v:p[String(i)]||0, cls:(p[String(i)]||0)>=Math.max(...Object.values(p))?'j':'mute'}));
+  },
+ },
+};
+function primVue(k){
+  const P = PRIM[k];
+  $('#primdet').innerHTML = `
+    <div class="g2">
+      <div>
+        <div class="lab" style="margin-bottom:9px">Quand l'utiliser</div>
+        <p style="font-size:15px; color:var(--ink2)">${P.quand}</p>
+        <div class="lab" style="margin:22px 0 9px">Ce que la doc impose</div>
+        <ul class="fail" style="padding:0">${P.regles.map(r=>`<li class="good"><span class="m">&middot;</span><div>${r}</div></li>`).join('')}</ul>
+      </div>
+      <div>
+        <div class="lab" style="margin-bottom:9px">La question</div>
+        <pre style="max-height:210px">${jsonHi(P.q())}</pre>
+        <div class="lab" style="margin:20px 0 9px">La réponse, réelle</div>
+        <pre style="max-height:180px">${jsonHi(P.r())}</pre>
+        <div class="lab" style="margin:20px 0 10px">${P.viztitre}</div>
+        <div class="dist" id="pviz" style="--lw:104px"></div>
+      </div>
+    </div>`;
+  dist($('#pviz'), P.viz());
+}
+$$('#prim button').forEach(b=> b.onclick = ()=>{
+  $$('#prim button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); primVue(b.dataset.p);
+});
+primVue('noul');
+
+/* confiance interactive */
+const CN = 5;
+function majConf(){
+  const pmax = +$('#cslide').value/100;
+  const reste = (1-pmax)/(CN-1);
+  const probs = [pmax, ...Array(CN-1).fill(reste)];
+  const conf = Math.max(0, (CN*pmax - 1)/(CN - 1));
+  dist($('#cdist'), probs.map((v,i)=>({t: i? 'option '+(i+1) : 'gagnante', v, cls: i?'mute':'j'})));
+  $('#cval').textContent = fx(conf,2);
+  $('#cmsg').textContent = conf>=0.9 ? "Au dessus de 0,90 la doc conseille d'agir automatiquement."
+    : conf>=0.5 ? "Zone intermédiaire : la doc conseille une confirmation ou une revue."
+    : "Sous 0,50 la doc conseille de router vers un humain ou une solution de repli.";
+}
+$('#cslide').oninput = majConf; majConf();
+
+/* ================= 03 : bac a sable ================= */
+const S3 = {
+ noul: {
+   intro: `<p>La batterie réelle du banc hate speech : neuf <span class="mono">noul</span> dans un seul appel,
+     huit axes plus la gate. Les questions sont en anglais, les textes non. Variante
+     <span class="mono">criteres</span>, celle retenue en production d'évaluation.</p>`,
+   q: ()=> D.presets.noul.questions,
+   ex: ()=> D.presets.noul.exemples,
+   st: t=> t,
+   rows: rep=>{
+     const a = rep.answers;
+     return D.presets.noul.axes.map(k=>({t:k, v:a[k].noul, cls: a[k].noul>=0.5?'j':'mute'}));
+   },
+   read: rep=>{
+     const a = rep.answers, on = D.presets.noul.axes.filter(k=>a[k].noul>=0.5);
+     if(!on.length) return `Aucune question ne dépasse 0,50. Le texte ressort propre de la batterie.`;
+     return `Déclenchés : <b>${on.join(', ')}</b>. Les neuf questions sont évaluées en parallèle sur le même
+       texte, sans s'influencer : la doc le mesure, 13 questions groupées rendent le même résultat que
+       13 appels séparés.`;
+   },
+ },
+ choice: {
+   intro: `<p>Le reranker de narratifs : un post et cinq claims sortis de l'embedder par similarité cosinus,
+     il faut en choisir un ou répondre « aucun ». Les claims ne sont plus du texte dans un prompt,
+     ils sont l'espace de réponse déclaré.</p>`,
+   q: ()=> D.presets.choice.questions,
+   ex: ()=> D.presets.choice.exemples,
+   st: t=> ({text:t}),
+   rows: rep=>{
+     const p = rep.answers.claim.probabilities, mx = Math.max(...Object.values(p));
+     return Object.keys(p).sort((a,b)=>p[b]-p[a]).map(k=>({
+       t: k==='0' ? 'aucun narratif' : 'claim '+k+' : '+D.presets.choice.claims[k].slice(0,44)+'...',
+       v: p[k], cls: p[k]===mx?'j':'mute'}));
+   },
+   read: (rep,ex)=>{
+     const a = rep.answers.claim;
+     const juste = ex && a.choice === ex.verite;
+     const lib = a.choice==='0' ? 'aucun narratif' : 'le claim '+a.choice;
+     return `Réponse : <b>${lib}</b>, confiance ${fx(a.confidence,2)}.` +
+       (ex ? ` Vérité terrain : ${ex.verite==='0'?'aucun':'claim '+ex.verite}. <b style="color:var(--${juste?'ok':'ko'})">${juste?'juste':'raté'}</b>.` : '') +
+       ` La probabilité de « aucun » vaut ${fx(a.probabilities['0']||0,2)}, c'est elle qui porte la règle de décision.`;
+   },
+ },
+ score: {
+   intro: `<p>L'analyse de sentiment, telle qu'elle tourne aujourd'hui sur un BERT multilingue à cinq
+     étoiles affiné sur six langues. Ici, cinq crans décrits en clair, et aucun entraînement.
+     Regardez la <b>confiance</b> autant que le score.</p>`,
+   q: ()=> D.presets.score.questions,
+   ex: ()=> D.presets.score.exemples,
+   st: t=> t,
+   rows: rep=>{
+     const a = rep.answers.sentiment, p = a.probabilities, mx = Math.max(...Object.values(p));
+     const noms = ['très négatif','négatif','neutre','positif','très positif'];
+     return noms.map((n,i)=>({t:n, v:p[String(i)]||0, cls:(p[String(i)]||0)===mx?'j':'mute'}));
+   },
+   read: rep=>{
+     const a = rep.answers.sentiment;
+     const noms = ['très négatif','négatif','neutre','positif','très positif'];
+     const bas = Math.floor(a.score), h = a.score-bas;
+     const pos = h<0.15||bas>=4 ? noms[Math.min(4,Math.round(a.score))]
+       : `entre « ${noms[bas]} » et « ${noms[bas+1]} »`;
+     return `Score <b>${fx(a.score,2)}</b> sur 4, soit ${pos}. Confiance ${fx(a.confidence,2)}.` +
+       (a.confidence<0.6 ? ` <b style="color:var(--ko)">Confiance basse</b> : la distribution est étalée,
+        le modèle ne tranche pas. C'est exactement le signal que la doc dit de surveiller hors anglais.` : '');
+   },
+ },
+};
+let s3t='noul', s3ex=null;
+function s3render(){
+  const C = S3[s3t];
+  $('#s3intro').innerHTML = C.intro;
+  $('#s3chips').innerHTML = C.ex().map((e,i)=>
+    `<button class="chip ${i===0?'on':''}" data-i="${i}">${e.id}${e.langue?`<span class="lg">${e.langue}</span>`:''}</button>`).join('');
+  $$('#s3chips .chip').forEach(c=> c.onclick = ()=>{
+    $$('#s3chips .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+    s3pick(C.ex()[+c.dataset.i]);
+  });
+  $('#s3req').innerHTML = jsonHi({model:'jev-latest', state:'<le texte>', questions:C.q()});
+  s3pick(C.ex()[0]);
+}
+function s3pick(ex){
+  s3ex = ex;
+  $('#s3txt').value = ex.texte;
+  $('#s3note').innerHTML = ex.note ? `<b style="color:var(--ink2)">${esc(ex.note)}</b>` : '';
+  s3show(D.reponses[s3t][ex.id], false, ex);
+}
+function s3show(rep, direct, ex){
+  const C = S3[s3t];
+  dist($('#s3out'), C.rows(rep));
+  $('#s3read').innerHTML = C.read(rep, ex);
+  const tok = rep.usage ? rep.usage.input_tokens : 0;
+  $('#s3meta').innerHTML = `<span>latence <b>${rep._ms||'-'} ms</b></span>
+    <span>entrée <b>${tok.toLocaleString('fr-FR')}</b> jetons</span>
+    <span>coût <b>${cout(tok).toFixed(6).replace('.',',')} $</b></span>
+    <span>sur 1 M de textes <b>${(cout(tok)*1e6).toFixed(0)} $</b></span>`;
+  $('#s3src').innerHTML = direct
+    ? '<span class="tag ok"><i class="dot"></i>appel direct, ' + (rep._ms||'?') + ' ms</span>'
+    : `<span class="tag">enregistré le 27/09</span>${LIVE?' <span class="tag j" style="margin-left:6px">cliquez pour rejouer en direct</span>':''}`;
+}
+$$('#segS3 button').forEach(b=> b.onclick = ()=>{
+  $$('#segS3 button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  s3t = b.dataset.t; s3render();
+});
+$('#s3go').onclick = async ()=>{
+  const C = S3[s3t], txt = $('#s3txt').value.trim();
+  if(!txt) return;
+  const memeTexte = s3ex && s3ex.texte === txt;
+  if(!LIVE){
+    if(memeTexte){ s3show(D.reponses[s3t][s3ex.id], false, s3ex); }
+    else{
+      $('#s3read').innerHTML = `<b style="color:var(--ko)">Texte modifié, mais l'API n'est pas joignable.</b>
+        Lancez <span class="mono">serveur.py</span> pour interroger Jev en direct, ou reprenez un texte préparé.`;
+    }
+    return;
+  }
+  const btn = $('#s3go'); btn.disabled = true; btn.textContent = 'en cours...';
+  try{
+    const rep = await demander(C.st(txt), C.q());
+    s3show(rep, true, memeTexte ? s3ex : null);
+  }catch(e){
+    $('#s3read').innerHTML = `<b style="color:var(--ko)">Échec de l'appel.</b> <span class="mono">${esc(e.message)}</span>`;
+  }finally{ btn.disabled = false; btn.textContent = 'Demander à Jev'; }
+};
+s3render();
+
+/* ================= 04 : reranker ================= */
+$('#s4req').innerHTML = jsonHi({model:"jev-1.13.0", state:{text:POST1},
+  questions: D.presets.choice.questions});
+
+dist($('#s4cos'), Object.keys(D.cosinus).map(k=>({
+  t:k, label:`<span class="mono">${k}</span>`, v:D.cosinus[k], vt:fx(D.cosinus[k],3), cls:'p'})));
+
+const TQ = D.reponses.choice.turquie.answers.claim;
+dist($('#s4prob'), Object.keys(TQ.probabilities).sort((a,b)=>TQ.probabilities[b]-TQ.probabilities[a])
+  .map(k=>({t:k, label:`<span class="mono">${k==='0'?'0 aucun':k}</span>`, v:TQ.probabilities[k],
+            cls: k===TQ.choice ? 'j' : (k==='1' ? 'p' : 'mute')})));
+(function(){
+  const p0 = TQ.probabilities['0']||0, p1 = TQ.probabilities['1']||0;
+  $('#s4lect').innerHTML = `
+    <p>En prenant le maximum, on répond <b style="color:var(--jev)">0</b>, rejet. C'est faux.</p>
+    <p>Mais P(0) ne vaut que <span class="mono">${fx(p0,2)}</span>. Jev hésite, et l'argmax transforme
+      cette hésitation en rejet ferme. Le claim 1, le bon, est à <span class="mono">${fx(p1,2)}</span>.</p>
+    <p>C'est la première famille d'erreurs du banc, et la seule qui se rattrape : ${D.reranker.erreurs.A}
+      posts porteurs rejetés sans conviction, contre ${D.reranker.erreurs.B} rejetés avec aplomb et
+      ${D.reranker.erreurs.C} faux positifs.</p>
+    <p style="margin-bottom:0; padding-top:12px; border-top:1px solid var(--rule); font-size:13.5px">
+      <b>Jev n'est pas déterministe.</b> Ce cas rejoué cinq fois au banc donnait P(0) entre 0,16 et 0,23
+      d'écart au tirage, le choix restant stable. Sur 333 posts, l'amplitude entre exécutions est de
+      1,5 point en classification, contre environ 6 pour les modèles raisonnants du banc.</p>`;
+})();
+$('#s4meta').innerHTML = `<span>latence <b>${D.reponses.choice.turquie._ms} ms</b></span>
+  <span>entrée <b>${D.reponses.choice.turquie.usage.input_tokens}</b> jetons</span>
+  <span>vérité terrain <b style="color:var(--prod)">claim 1</b></span>
+  <span>argmax <b style="color:var(--jev)">0, rejet</b></span>`;
+
+tbl($('#s4var'), ['variante','ce qu\'elle teste','classification','rejet','jetons / appel'],
+  D.reranker.variantes.map(v=>({_hi: v.nom==='portage', c:[
+    `<span class="mono">${v.nom}</span>`,
+    `<span class="gauche" style="color:var(--ink3); font-size:13px">${v.quoi}</span>`,
+    fx(v.classif), fx(v.rejet), v.tokens]})));
+
+(function(){
+  const [G, J] = D.reranker.final;
+  const cel = (v, mieux, suf)=> `<span class="${mieux?'best':'lose'}">${v}${suf||''}</span>`;
+  const est = ' <span style="color:var(--ink3); font-size:11.5px">estimé</span>';
+  tbl($('#s4fin'),
+    ['', 'Gemma 4 12B <span style="color:var(--ink3)">production</span>',
+         'Jev 1.13 <span style="color:var(--ink3)">TypeSafe</span>'],
+    [{c:['Classification des narratifs (F1)', cel(fx(G.classif), G.classif>J.classif)+est,
+                                              cel(fx(J.classif), J.classif>G.classif)]},
+     {c:['Rejet du hors-narratif (F1)',       cel(fx(G.rejet),   G.rejet>J.rejet)+est,
+                                              cel(fx(J.rejet),   J.rejet>G.rejet)]},
+     {c:['Temps, 1 M de posts', cel(G.heures.toFixed(1).replace('.',','), G.heures<J.heures, ' h'),
+                                cel(J.heures.toFixed(1).replace('.',','), J.heures<G.heures, ' h')]},
+     {c:['Coût, 1 M de posts',  cel(G.cout.toFixed(2).replace('.',','),   G.cout<J.cout, ' $'),
+                                cel(J.cout.toFixed(2).replace('.',','),   J.cout<G.cout, ' $')]}]);
+  $('#s4vol').innerHTML = D.reranker.volume.map(v=>`
+    <div style="display:grid; grid-template-columns:1fr 92px 92px; gap:16px; align-items:baseline;
+      padding:11px 0; border-bottom:1px solid var(--rule)">
+      <div style="font-family:var(--mono); font-size:13.5px">${v.n}</div>
+      <div class="num" style="text-align:right; color:var(--ink2)">${v.temps}</div>
+      <div class="num" style="text-align:right; font-weight:500">${v.cout.toFixed(2).replace('.',',')} $</div>
+    </div>`).join('') + `<div style="font-size:12.5px; color:var(--ink3); margin-top:12px; line-height:1.5">
+      0,042 $ par million de jetons d'entrée, sortie gratuite. 951 jetons par appel, dont une vingtaine
+      pour le post : c'est la liste des claims qui coûte, pas le texte.</div>`;
+})();
+
+/* ================= 05 : hate speech ================= */
+$('#s5req').innerHTML = jsonHi({model:'jev-latest', state:'<le post>', questions: D.presets.noul.questions});
+
+function s5pick(i){
+  const ex = D.presets.noul.exemples[i], rep = D.reponses.noul[ex.id];
+  $('#s5txt').textContent = ex.texte;
+  $('#s5lg').textContent = ex.langue;
+  $('#s5note').innerHTML = `<b style="color:var(--ink2)">Attendu : ${ex.attendu}.</b> ${esc(ex.note)}`;
+  dist($('#s5dist'), D.presets.noul.axes.map(k=>({
+    t:k, v:rep.answers[k].noul, cls: rep.answers[k].noul>=0.5?'j':'mute'})));
+  $('#s5meta').innerHTML = `<span>latence <b>${rep._ms} ms</b></span>
+    <span>entrée <b>${rep.usage.input_tokens.toLocaleString('fr-FR')}</b> jetons</span>
+    <span>dont le post <b>~20</b></span>
+    <span>9 questions, <b>1 appel</b></span>`;
+}
+$('#s5chips').innerHTML = D.presets.noul.exemples.map((e,i)=>
+  `<button class="chip ${i?'':'on'}" data-i="${i}">${e.id}<span class="lg">${e.langue}</span></button>`).join('');
+$$('#s5chips .chip').forEach(c=> c.onclick = ()=>{
+  $$('#s5chips .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); s5pick(+c.dataset.i);
+});
+s5pick(0);
+
+/* barres groupees par axe */
+(function(){
+  const ax = D.hate.etape2.filter(r=>r.axe!=='macro');
+  const W=920,H=290,L=34,R=8,T=14,B=52, n=ax.length;
+  const bw=(W-L-R)/n, ecart=22, jour=3, bar=(bw-ecart-2*jour)/3;
+  const y = v => T + (1-v)*(H-T-B);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+  [0,.25,.5,.75,1].forEach(g=>{
+    s += `<line class="gl" x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}"/>
+          <text x="${L-7}" y="${y(g)+3.5}" text-anchor="end">${g.toFixed(2).replace('.',',')}</text>`;
+  });
+  ax.forEach((r,i)=>{
+    const x0 = L + i*bw + ecart/2;
+    [['jev','var(--jev)'],['shield','var(--shield)'],['nos','var(--prod)']].forEach(([k,c],j)=>{
+      const v = r[k], x = x0 + j*(bar+jour);
+      s += `<rect x="${x}" y="${y(v)}" width="${bar}" height="${H-B-y(v)}" fill="${c}">
+              <title>${r.axe} / ${k} : ${fx(v)}</title></rect>`;
+      s += `<text class="v" x="${x+bar/2}" y="${y(v)-5}" text-anchor="middle" style="font-size:9px">${fx(v,2)}</text>`;
+    });
+    s += `<line x1="${x0}" x2="${x0+3*bar+2*jour}" y1="${H-B+5}" y2="${H-B+5}" stroke="var(--ink3)" stroke-width="1"/>`;
+    s += `<text x="${x0 + (3*bar + 2*jour)/2}" y="${H-B+20}" text-anchor="middle" style="font-size:11px; fill:var(--ink2)">${r.axe}</text>`;
+  });
+  s += `<line class="ax" x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}"/></svg>`;
+  $('#s5chart').innerHTML = s;
+})();
+
+
+/* courbe de calibration */
+(function(){
+  const W=430,H=390,L=44,R=14,T=14,B=44;
+  const x = v => L + v*(W-L-R), y = v => T + (1-v)*(H-T-B);
+  const serie = m => D.hate.calibration.filter(c=>c.modele===m).sort((a,b)=>a.annonce-b.annonce);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+  [0,.25,.5,.75,1].forEach(g=>{
+    s += `<line class="gl" x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}"/>
+          <text x="${L-7}" y="${y(g)+3.5}" text-anchor="end">${g.toFixed(2).replace('.',',')}</text>
+          <text x="${x(g)}" y="${H-B+17}" text-anchor="middle">${g.toFixed(2).replace('.',',')}</text>`;
+  });
+  s += `<line x1="${x(0)}" y1="${y(0)}" x2="${x(1)}" y2="${y(1)}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="4 4"/>`;
+  s += `<text x="${x(0.62)}" y="${y(0.72)}" transform="rotate(-45 ${x(0.62)} ${y(0.72)})" style="font-size:9.5px; fill:var(--ink3)">calibration parfaite</text>`;
+  [['jev','var(--jev)'],['shieldstral','var(--shield)']].forEach(([m,c])=>{
+    const pts = serie(m);
+    s += `<polyline fill="none" stroke="${c}" stroke-width="1.8" points="${pts.map(p=>`${x(p.annonce)},${y(p.reel)}`).join(' ')}"/>`;
+    pts.forEach(p=> s += `<circle cx="${x(p.annonce)}" cy="${y(p.reel)}" r="3.2" fill="${c}">
+      <title>${m} : annonce ${fx(p.annonce,3)}, reel ${fx(p.reel,3)}, n=${p.n}</title></circle>`);
+  });
+  s += `<line class="ax" x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}"/>
+        <line class="ax" x1="${L}" x2="${L}" y1="${T}" y2="${y(0)}"/>
+        <text x="${(L+W-R)/2}" y="${H-6}" text-anchor="middle" style="font-size:10.5px">probabilité annoncée</text>
+        <text x="13" y="${(T+y(0))/2}" text-anchor="middle" transform="rotate(-90 13 ${(T+y(0))/2})" style="font-size:10.5px">taux réel de positifs</text></svg>`;
+  $('#s5calib').innerHTML = s + `<div class="leg">
+    <span><i style="background:var(--jev)"></i>Jev</span>
+    <span><i style="background:var(--shield)"></i>Shieldstral</span>
+    <span><i style="background:var(--ink3)"></i>diagonale</span></div>`;
+})();
+
+/* ================= 06 : verdict ================= */
+const V = [
+ {q:"Remplacer le reranker de narratifs ?", a:"non", cls:"non",
+  w:"0,842 de classification et 0,721 de rejet, contre environ 0,900 et 0,833 pour Gemma 4 12B. Plus cher de 9 %, et presque deux fois plus lent au débit contractuel. Le niveau atteint est celui de GPT-4o mini."},
+ {q:"Remplacer nos 8 mDeBERTa sur les axes de haine ?", a:"non", cls:"non",
+  w:"0,801 contre 0,859 sous gate oracle, et ils gagnent 6 axes sur 8. En plus, c'est une API fermée."},
+ {q:"Prototyper un nouvel axe de détection ?", a:"oui", cls:"oui",
+  w:"Écrire une question au lieu d'annoter des milliers d'exemples. Sur age, notre axe le plus pauvre avec 121 positifs distincts, Jev fait 0,909 contre 0,783 sans avoir vu une ligne de nos données."},
+ {q:"Produire des labels pour distiller vers nos modèles ?", a:"à creuser", cls:"peut",
+  w:"Ses probabilités sont calibrées, ECE 0,037 contre 0,123, donc utilisables comme cible souple. À regarder d'abord sur age et disability, où les données manquent."},
+ {q:"En faire une brique souveraine en production ?", a:"non", cls:"non",
+  w:"API fermée, pas de poids, pas d'auto-hébergement. Disqualifié par construction, quels que soient les chiffres."},
+];
+$('#s6list').innerHTML = V.map(v=>`
+  <div class="verdict"><div><div class="q">${v.q}</div><div class="w">${v.w}</div></div>
+    <div class="a ${v.cls}">${v.a}</div></div>`).join('');
+
+/* ---------- init ---------- */
+detecter(); spy();
+addEventListener('keydown', e=>{
+  if(e.target.matches('textarea,input')) return;
+  const i = secs.findIndex(s=> s.id === (links.find(a=>a.classList.contains('on'))||{}).dataset?.s);
+  if(e.key==='ArrowDown'||e.key==='PageDown'){ if(secs[i+1]){e.preventDefault(); secs[i+1].scrollIntoView();} }
+  if(e.key==='ArrowUp'||e.key==='PageUp'){ if(secs[i-1]){e.preventDefault(); secs[i-1].scrollIntoView();} }
+});
+</script>
+</body>
+</html>
