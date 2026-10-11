@@ -73,7 +73,10 @@ D'OU VIENNENT LES CHIFFRES
   - campagne reranker : 6 194 appels, 333 posts annotes, 6 formes de prompt ;
   - campagne hate speech du 23/09/2026 : 8 161 appels, 1 200 lignes de test par
     axe, commit 6807993 du depot hate-speech-detection ;
-  - reponses de la section "Essayer" : rejouees le 27/09/2026 contre l'API.
+  - reponses de la section "Essayer" : rejouees le 27/09/2026 contre l'API ;
+  - limites de debit : doc TypeSafe au 11/10/2026, 80 requetes et 100 000 jetons
+    par seconde (1 200 requetes par minute pendant les campagnes). TypeSafe
+    previent qu'elles changent sans preavis : les temps "par million" en dependent.
 
 Les deux seules valeurs estimees de toute la page sont les scores de Gemma 4 12B
 au banc reranker, marquees comme telles a l'ecran.
